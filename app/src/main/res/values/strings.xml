@@ -1,0 +1,52 @@
+<resources>
+    <string name="app_name">NavigationLeftExample</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_subtitle">Robot Car</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="action_settings">Settings</string>
+
+    <string name="menu_home">Home</string>
+    <string name="menu_bluetooth">Bluetooth</string>
+    <string name="menu_wifi">WiFi</string>
+    <string name="title_activity_bluetooth">BluetoothActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+
+    <!-- Communication Channel DATA -->
+    <string name="channel_name">bluetooth_chanel</string>
+    <string name="channel_description">Bluetooth Communication Chanel</string>
+
+
+
+    <!-- Messages Default -->
+    <string name="unknown_device">Uknown Device</string>
+    <!-- Messages Error -->
+    <string name="ble_not_supported">BLE is not supported on your device</string>
+    <string name="ble_not_connected">BLE Device could not be connected</string>
+
+    <!-- Messages Success -->
+    <string name="ble_connected">BLE Device is connected to your phone</string>
+
+    <string-array name="BLE_UIID">
+        <item >http://development.com/xxxx</item>
+        <item >http://test.com/xxx</item>
+        <item >http://example.com/xxx</item>
+    </string-array>
+
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+</resources>

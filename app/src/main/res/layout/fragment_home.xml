@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.home.HomeFragment">
+
+
+
+    <Switch
+        android:id="@+id/directionSwitch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="52dp"
+        android:text="Switch"
+        app:defaultNavHost="true"
+        app:layout_constraintHorizontal_bias="0.876"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <SeekBar
+        android:id="@+id/stearingSeekBar"
+        android:layout_width="315dp"
+        android:layout_height="54dp"
+        android:layout_marginTop="176dp"
+        android:rotation="180"
+        app:defaultNavHost="true"
+        app:layout_constraintHorizontal_bias="0.064"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <SeekBar
+        android:id="@+id/speedSeekBar"
+        android:layout_width="249dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="120dp"
+        android:rotation="270"
+        app:defaultNavHost="true"
+        app:layout_constraintHorizontal_bias="0.804"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
