@@ -81,7 +81,7 @@ public class BluetoothFragment extends Fragment {
 
     private static final int REQUEST_CODE_BLUETOOTH_SCAN = 1;
 
-    // Stops scanning after 10 seconds.
+    // Stops scanning after 5 seconds.
     private static final long SCAN_PERIOD = 5000;
 
     BluetoothViewModel bluetoothViewModel;
