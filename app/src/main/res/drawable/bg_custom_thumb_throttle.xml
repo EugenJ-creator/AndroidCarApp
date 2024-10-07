@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <item
+
+        android:drawable="@drawable/ic_thumb_arrows_throttle"
+        android:height="300px"
+        android:width="300px"
+    />
+
+
+</layer-list>
