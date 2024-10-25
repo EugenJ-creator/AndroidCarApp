@@ -93,10 +93,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
+
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="596dp"
+        android:layout_marginStart="608dp"
         android:layout_marginTop="40dp"
         android:src="@drawable/dashboard_left_on"
         app:layout_constraintHorizontal_bias="0.953"
@@ -106,11 +107,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
+
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="596dp"
-        android:layout_marginTop="92dp"
+        android:layout_marginStart="608dp"
+        android:layout_marginTop="88dp"
         android:src="@drawable/dashboard_light_on"
         app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -119,25 +121,11 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="644dp"
-        android:layout_marginTop="140dp"
-        android:src="@drawable/dashboard_off_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="644dp"
-        android:layout_marginTop="92dp"
+        android:layout_marginStart="664dp"
+        android:layout_marginTop="88dp"
         android:src="@drawable/dashboard_parktronic_on"
         app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -146,11 +134,10 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="644dp"
+        android:layout_marginStart="664dp"
         android:layout_marginTop="40dp"
         android:src="@drawable/dashboard_right_on"
         app:layout_constraintHorizontal_bias="0.953"
@@ -163,8 +150,8 @@
     <ImageView
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="596dp"
-        android:layout_marginTop="140dp"
+        android:layout_marginStart="608dp"
+        android:layout_marginTop="128dp"
         android:src="@drawable/dashboard_warning_on"
         app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -172,7 +159,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
-
 
     <ImageView
         android:layout_width="36dp"
@@ -200,27 +186,17 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-    <Switch
-        android:id="@+id/directionSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="216dp"
-        android:text="Switch"
-        app:defaultNavHost="true"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+
 
     <com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar
         android:id="@+id/circularSeekbar"
-        android:layout_width="213dp"
-        android:layout_height="165dp"
+        android:layout_width="175dp"
+        android:layout_height="195dp"
         android:layout_marginTop="216dp"
         android:rotationY="180"
-        app:circle_x_radius="100dp"
-        app:circle_y_radius="70dp"
+        app:circle_color="#C8D5FF"
+        app:circle_x_radius="130dp"
+        app:circle_y_radius="150dp"
         app:end_angle="0"
         app:layout_constraintHorizontal_bias="0.053"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -237,31 +213,40 @@
         app:use_custom_radii="true"
         tools:ignore="MissingConstraints" />
 
+
     <SeekBar
-        android:id="@+id/stearingSeekBar"
-        android:layout_width="138dp"
-        android:layout_height="28dp"
-        android:layout_marginTop="324dp"
-        android:rotation="180"
+        android:id="@+id/speedSeekBar"
+        android:layout_width="120dp"
+        android:layout_height="130dp"
+        android:layout_marginTop="192dp"
+        android:progress="0"
+        android:progressBackgroundTint="#C8D5FF"
+        android:rotation="270"
+        android:splitTrack="true"
+        android:thumb="@drawable/arrow_circle_up"
+        android:thumbOffset="20dp"
+        android:thumbTint="#4A8AFF"
         app:defaultNavHost="true"
-        app:layout_constraintHorizontal_bias="0.433"
+        app:layout_constraintHorizontal_bias="0.973"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
     <SeekBar
-        android:id="@+id/speedSeekBar"
-        android:layout_width="240dp"
-        android:layout_height="24dp"
-        android:layout_marginTop="340dp"
+        android:id="@+id/speedBackSeekBar"
+        android:layout_width="120dp"
+        android:layout_height="130dp"
+        android:layout_marginTop="216dp"
         android:progress="0"
-        android:progressDrawable="@drawable/bg_custom_seekbar"
-        android:rotation="270"
-        android:splitTrack="false"
-        android:thumb="@drawable/bg_custom_thumb_throttle"
+        android:progressBackgroundTint="#C8D5FF"
+        android:rotation="90"
+        android:splitTrack="true"
+        android:thumb="@drawable/arrow_circle_up"
+        android:thumbOffset="20dp"
+        android:thumbTint="#4A8AFF"
         app:defaultNavHost="true"
-        app:layout_constraintHorizontal_bias="0.804"
+        app:layout_constraintHorizontal_bias="0.805"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -317,15 +302,20 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
-    <Button
-        android:id="@+id/startButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="260dp"
-        android:text="Start"
-        app:layout_constraintHorizontal_bias="0.399"
+
+    <ImageButton
+        android:id="@+id/onOffButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="664dp"
+        android:layout_marginTop="128dp"
+        android:background="@null"
+        android:clickable="true"
+        android:src="@drawable/dashboard_off_on"
+        app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 

@@ -2,57 +2,48 @@ package com.example.navigationleftexample.ui.home;
 
 import android.Manifest;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
-import android.widget.Switch;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
-import com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar;
 import com.example.navigationleftexample.R;
-import com.example.navigationleftexample.databinding.FragmentHomeBinding;
-import com.example.navigationleftexample.ui.bluetooth.BluetoothFragment;
-import com.example.navigationleftexample.ui.bluetooth.BluetoothLeService;
 import com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar;
+import com.example.navigationleftexample.databinding.FragmentHomeBinding;
+import com.example.navigationleftexample.ui.bluetooth.BluetoothLeService;
 
 import java.util.UUID;
 
 public class HomeFragment extends Fragment {
 
-    private SeekBar stearAngleSeekBar;
+
     private SeekBar speedcarSeekBar;
+    private SeekBar speedcarBackSeekBar;
 
     private CircularSeekBar circularSeekBarStearing;
-
-    private Switch directionSwitch;
 
     private ImageButton leftButton;
     private ImageButton rightButton;
     private ImageButton thrrottleButton;
     private ImageButton brakeButton;
 
-    private Button startButton;
+
+    private ImageButton onButton;
 
     private static final String TAG = "HomeFragment ";
 
@@ -62,7 +53,7 @@ public class HomeFragment extends Fragment {
 
 
     // Stearing iteration
-    private static final long ITERATION_PERIOD_MOTOR_POWER= 5;
+    private static final long ITERATION_PERIOD_MOTOR_POWER= 1;
     private static final long ITERATION_PERIOD_STEAR_ANGLE=5;
 
     private final static int STERAANGLE_MAX = 140;
@@ -70,10 +61,11 @@ public class HomeFragment extends Fragment {
     private final static int STERAANGLE_MIDDLE = 49;
     public static int stearEngle =  STERAANGLE_MIDDLE;
     public static int throttleProgress;
+    public static int throttleBackProgress;
     public static int direction = 0;
 
     private final static int MOTOR_POWER_MAX = 250;
-    private final static int MOTOR_POWER_MIN = -250;
+    private final static int MOTOR_POWER_MIN = 0;
     public static int motorPower = MOTOR_POWER_MIN;
 
     private FragmentHomeBinding binding;
@@ -85,8 +77,10 @@ public class HomeFragment extends Fragment {
     UpdateBrakeThread myUpdateBrakeThread = null;
 
     AutoBrakeThread  autoBrakeThread = null;
+    AutoBrakeBackThread  autoBrakeBackThread = null;
     AutoStearThread  autoStearThread = null;
 
+    Vibrator vibe = null;
 
     public class UpdateLeftButtonThread extends Thread {
 
@@ -283,6 +277,79 @@ public class HomeFragment extends Fragment {
     }
 
 
+    public class AutoBrakeBackThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted() ) {
+
+                    if ((throttleBackProgress > 0) && running) {
+                        while (throttleBackProgress != 0) {
+                            throttleBackProgress--;
+                            speedcarBackSeekBar.setProgress(throttleBackProgress);
+
+//                            byte[] val = new byte[1];
+//                            val[0] = (byte) throttleProgress;
+//                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                                sendCharacteristic(val, BluetoothLeService.CAR_SPEED_CHARACTERISTIC_UUID);
+//                            }
+                            Thread.sleep(ITERATION_PERIOD_MOTOR_POWER);
+                        }
+
+                    } else if ((throttleBackProgress < 0) && running){
+
+                        while (throttleBackProgress != 0) {
+                            throttleBackProgress++;
+                            speedcarBackSeekBar.setProgress(throttleBackProgress);
+//                            int posThrottleProgress;
+//
+//                            if (throttleProgress < 0) {
+//                                posThrottleProgress = (-1) * throttleProgress;
+//                            } else
+//                                posThrottleProgress = throttleProgress;
+//
+//                            byte[] val = new byte[1];
+//                            val[0] = (byte) posThrottleProgress;
+//                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                                sendCharacteristic(val, BluetoothLeService.CAR_SPEED_CHARACTERISTIC_UUID);
+//                            }
+                            Thread.sleep(ITERATION_PERIOD_MOTOR_POWER);
+                        }
+
+                    }
+
+                    return;
+                }
+                return;
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+
+
+        }
+    }
+
+
+
+
+
+
+
 
 
     public class AutoStearThread extends Thread {
@@ -432,7 +499,7 @@ public class HomeFragment extends Fragment {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-
+        vibe= (Vibrator) getContext().getSystemService(getContext().VIBRATOR_SERVICE) ;
 
         //myUpdateLeftButtonThread = new UpdateLeftButtonThread();
         //myUpdateRightButtonThread = new UpdateRightButtonThread();
@@ -445,62 +512,18 @@ public class HomeFragment extends Fragment {
         thrrottleButton = (ImageButton) binding.throttle;
         brakeButton = (ImageButton) binding.brake;
 
-        startButton = (Button) binding.startButton;
+        onButton = (ImageButton) binding.onOffButton;
 
-        stearAngleSeekBar = (SeekBar)binding.stearingSeekBar;
+
         speedcarSeekBar = (SeekBar)binding.speedSeekBar;
-        directionSwitch = (Switch) binding.directionSwitch;
+        speedcarBackSeekBar = (SeekBar)binding.speedBackSeekBar;
 
         speedcarSeekBar.setMin(MOTOR_POWER_MIN);
         speedcarSeekBar.setMax(MOTOR_POWER_MAX);
 
+        speedcarBackSeekBar.setMin(MOTOR_POWER_MIN);
+        speedcarBackSeekBar.setMax(MOTOR_POWER_MAX);
 
-        stearAngleSeekBar.setMin(STERAANGLE_MIN);
-        stearAngleSeekBar.setMax(STERAANGLE_MAX);
-
-        // Change Direction if switch was chavked
-        directionSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                Toast.makeText(root.getContext(), "Bluetooth was changed", Toast.LENGTH_SHORT).show();
-                if (isChecked == true) {
-                    byte[] val =  new byte[1];
-                    val[0] = (byte) 1;
-
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        sendCharacteristic(val, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
-                    }
-
-                } else {
-                        byte[] val =  new byte[1];
-                        val[0] = (byte) 0;
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        sendCharacteristic(val, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
-                    }
-                }
-            }
-        });
-
-        stearAngleSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                byte[] val =  new byte[1];
-                val[0] = (byte )progress;
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
-                }
-
-            }
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-
-            }
-        });
 
         // Implenmenation of circular seekbar
         circularSeekBarStearing.setOnSeekBarChangeListener( new CircularSeekBar.OnCircularSeekBarChangeListener () {
@@ -540,33 +563,12 @@ public class HomeFragment extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 throttleProgress = progress;
 
-                // Change direction
-                if ((throttleProgress>0) && (direction==1)){
-                    direction=0;
-                    byte[] dir =  new byte[1];
-                    dir[0] = (byte) 0;
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
-                    }
-                }
-                else if ((throttleProgress<0) && (direction==0)) {
-                    direction=1;
-                    byte[] dir =  new byte[1];
-                    dir[0] = (byte) 1;
 
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
-                    }
-
-                }
                 // Change speed
                 int posThrottleProgress;
 
-                if (throttleProgress < 0) {
-                    posThrottleProgress = (-1) * throttleProgress;
-                } else
-                    posThrottleProgress = throttleProgress;
+                posThrottleProgress = throttleProgress;
 
                 posThrottleProgress &= 0xFF;
                 byte[] val = new byte[1];
@@ -583,6 +585,17 @@ public class HomeFragment extends Fragment {
                     autoBrakeThread.setRunning(false);
                     autoBrakeThread.interrupt();
                 }
+                // Change direction
+
+                if (direction!=0){
+                    direction=0;
+                }
+                byte[] dir =  new byte[1];
+                dir[0] = (byte) 0;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
+                }
 
             }
 
@@ -590,6 +603,55 @@ public class HomeFragment extends Fragment {
             public void onStopTrackingTouch(SeekBar seekBar) {
                 autoBrakeThread = new AutoBrakeThread();
                 autoBrakeThread.start();
+
+            }
+
+        });
+
+
+        speedcarBackSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                throttleBackProgress = progress;
+
+                // Change speed
+                int posThrottleBackProgress;
+
+                posThrottleBackProgress = throttleBackProgress;
+
+                posThrottleBackProgress &= 0xFF;
+                byte[] val = new byte[1];
+                val[0] = (byte) posThrottleBackProgress;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    sendCharacteristic(val, BluetoothLeService.CAR_SPEED_CHARACTERISTIC_UUID);
+                }
+
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                if (autoBrakeBackThread!=null) {
+                    autoBrakeBackThread.setRunning(false);
+                    autoBrakeBackThread.interrupt();
+                }
+                // Change direction
+
+                if (direction!=1){
+                    direction=1;
+                }
+                byte[] dir =  new byte[1];
+                dir[0] = (byte) 0;
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
+                }
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                autoBrakeBackThread = new AutoBrakeBackThread();
+                autoBrakeBackThread.start();
 
             }
 
@@ -618,18 +680,34 @@ public class HomeFragment extends Fragment {
 
 
 
-        startButton.setOnClickListener(new View.OnClickListener() {
+        onButton.setOnClickListener(new View.OnClickListener() {
+
+             int  on_off = 0;
 
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    byte[] val =  new byte[1];
-                    val[0] = (byte )stearEngle;
-                       sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
-                   }
+                // Turn Car ON
+                vibe.vibrate(50);
+
+                if (on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte )STERAANGLE_MIDDLE;
+                        sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+                    }
+                    onButton.setImageResource(R.drawable.dashboard_on_on);
+                    on_off=1;
+                } else
+                {
+                    // Turn your car OFF
+                    onButton.setImageResource(R.drawable.dashboard_off_on);
+                    on_off=0;
+                }
             }
         });
+
+
 
 
 //        leftButton.setOnTouchListener(new View.OnTouchListener() {
