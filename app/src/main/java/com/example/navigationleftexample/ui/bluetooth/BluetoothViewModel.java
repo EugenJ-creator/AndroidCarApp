@@ -1,14 +1,17 @@
 package com.example.navigationleftexample.ui.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.widget.Switch;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.SavedStateHandle;
 import androidx.lifecycle.ViewModel;
 
-public class BluetoothViewModel extends ViewModel {
+public class BluetoothViewModel extends ViewModel implements Parcelable {
 
    // private SavedStateHandle savedStateHandle;
 
@@ -19,30 +22,16 @@ public class BluetoothViewModel extends ViewModel {
 
     private MutableLiveData<Switch> switchButton;
 
+    private MutableLiveData<Float> tempSensor;
+    private MutableLiveData<Float> humiditySensor;
 
 
-//    public BluetoothViewModel() {
-//
-//        selectedDevice = new MutableLiveData<BluetoothDevice>();
-//
-//    }
 
-
-//
-//    public BluetoothViewModel(SavedStateHandle savedStateHandle) {
-//        this.savedStateHandle = savedStateHandle;
-//
-//            selectedDevice = savedStateHandle.getLiveData("pairedDevice");
-//                if (selectedDevice == null) {
-//                    selectedDevice = new MutableLiveData<BluetoothDevice>();
-//                }
-//            switchButton  = savedStateHandle.getLiveData("pairedDevice");
-//
-//       }
 
     public BluetoothViewModel() {
 
-
+        tempSensor = new MutableLiveData<>();
+        humiditySensor = new MutableLiveData<>();
         selectedDevice = new MutableLiveData<BluetoothDevice>();
         switchButton = new MutableLiveData<Switch>();
     }
@@ -50,6 +39,23 @@ public class BluetoothViewModel extends ViewModel {
 
 
 
+    public LiveData<Float> getTempSensor() {
+        return tempSensor;
+    }
+
+
+    public LiveData<Float> getHumiditySensor() {
+        return humiditySensor;
+    }
+
+
+    public void setTempSensor(float temp){
+        tempSensor.setValue(temp);
+    }
+
+    public void setHumiditySensor(float humidity){
+        humiditySensor.setValue(humidity);
+    }
 
 
 //    public void setPairedDeviceToSavedStateHandle(){
@@ -57,6 +63,21 @@ public class BluetoothViewModel extends ViewModel {
 //        savedStateHandle.set("pairedDevice", selectedDevice);
 //    }
 
+
+    protected BluetoothViewModel(Parcel in) {
+    }
+
+    public static final Creator<BluetoothViewModel> CREATOR = new Creator<BluetoothViewModel>() {
+        @Override
+        public BluetoothViewModel createFromParcel(Parcel in) {
+            return new BluetoothViewModel(in);
+        }
+
+        @Override
+        public BluetoothViewModel[] newArray(int size) {
+            return new BluetoothViewModel[size];
+        }
+    };
 
     public int setSwitch(Switch switchB) {
         switchButton.setValue(switchB);
@@ -80,6 +101,13 @@ public class BluetoothViewModel extends ViewModel {
     }
 
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 
+    @Override
+    public void writeToParcel(@NonNull Parcel dest, int flags) {
 
+    }
 }

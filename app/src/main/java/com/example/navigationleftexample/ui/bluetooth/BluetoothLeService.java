@@ -18,19 +18,32 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
+
+import com.example.navigationleftexample.databinding.FragmentBluetoothBinding;
+import com.example.navigationleftexample.databinding.FragmentHomeBinding;
+import com.example.navigationleftexample.ui.bluetooth.SampleGattAttributes;
 
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.navigationleftexample.R;
+import com.example.navigationleftexample.ui.home.HomeFragment;
+import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Hex;
 
 import java.util.List;
 import java.util.UUID;
+
+import kotlin.text.HexFormat;
 
 public class BluetoothLeService extends Service {
     public BluetoothLeService() {
@@ -53,8 +66,17 @@ public class BluetoothLeService extends Service {
     public static UUID DIRECTION_CHARACTERISTIC_UUID;
     public static UUID STEERING_ANGLE_CHARACTERISTIC_UUID;
     public static UUID CAR_SPEED_CHARACTERISTIC_UUID;
+    public static UUID CAR_BUZZER_CHARACTERISTIC_UUID;
+    public static UUID CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID;
+    public static UUID CAR_TEMP_HUMIDITY_NOTIFICATION_DESCRIPTOR_CCCD_UUID;
 
 //    private Handler mainHandler = new Handler(getMainLooper());
+
+    // ----------------------------------------Data------------------------------------------------------------------------------------
+
+    public byte[] tempHumidityNotificationData;
+    private Float tempData;
+    private Float humidityData;
 
     private Binder binder = new LocalBinder();
 
@@ -68,6 +90,8 @@ public class BluetoothLeService extends Service {
 
     List<BluetoothGattCharacteristic> gattCharacteristics;
 
+    List<BluetoothGattDescriptor> gattDescriptors;
+
     public static BluetoothGattService getmService() {
         return mService;
     }
@@ -76,11 +100,44 @@ public class BluetoothLeService extends Service {
         return bluetoothGatt;
     }
 
+    private BluetoothViewModel bluetoothFragmentViewModel;
+
+    Intent intentService;
+
+    public static final String ACTION_NOTIFICATION_RECEIVED = "ACTION_NOTIFICATION_RECEIVED";
+
+
+    String tempString;
+    String humidityString;
+    public static String convertByteToHexadecimal(byte[] byteArray)
+    {
+        String hex = "";
+
+        // Iterating through each byte in the array
+        for (byte i : byteArray) {
+            hex += String.format("%02X", i);
+        }
+
+        return hex;
+    }
+    // It is deprecated. UUID are always updated
     public static class BLEUUID {
-        public static final String SERVICE = "0000fff0-0000-1000-8000-00805f9b34fb"; //  GATT CAR DEVICE SERVICE
-        public static final String DIRECTION_CHARACTERISTIC = "0000fff5-0000-1000-8000-00805f9b34fb";
-        public static final String STEERING_ANGLE_CHARACTERISTIC = "0000fff6-0000-1000-8000-00805f9b34fb";
-        public static final String CAR_SPEED_CHARACTERISTIC = "0000fff7-0000-1000-8000-00805f9b34fb";
+        public static final String SERVICE = "0000ffe0-0000-1000-8000-00805f9b34fb"; //  GATT CAR DEVICE SERVICE
+        public static final String DIRECTION_CHARACTERISTIC = "0000ffe1-0000-1000-8000-00805f9b34fb";
+        public static final String STEERING_ANGLE_CHARACTERISTIC = "0000ffe2-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_SPEED_CHARACTERISTIC = "0000ffe3-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_BUZZER_CHARACTERISTIC = "0000ffe4-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC = "0000ffe5-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_TEMP_HUMIDITY_NOTIFICATION_CCCD_DESCRIPTOR = "00002902-0000-1000-8000-00805f9b34fb";
+    }
+
+    private void sendDataToActivity()
+    {
+        Intent sendBluetoothData = new Intent();
+        sendBluetoothData.setAction("BLUETOOTH_DATA");
+        sendBluetoothData.putExtra( "TEMP_DATA",tempData);
+        LocalBroadcastManager.getInstance(this.getApplicationContext()).sendBroadcast(sendBluetoothData);
+
     }
 
 
@@ -142,6 +199,8 @@ public class BluetoothLeService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
+        intentService = intent;
+
         return binder;
         //throw new UnsupportedOperationException("Not yet implemented");
     }
@@ -192,7 +251,7 @@ public class BluetoothLeService extends Service {
                 // get Characteristics
                 gattCharacteristics = mService.getCharacteristics();
 
-
+                // Find instances for UUID if we know UUID String
                 for (BluetoothGattCharacteristic gattCharacteristic :
                         gattCharacteristics) {
                     UUID uid = gattCharacteristic.getUuid();
@@ -203,7 +262,12 @@ public class BluetoothLeService extends Service {
                         STEERING_ANGLE_CHARACTERISTIC_UUID = uid;
                     } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_SPEED_CHARACTERISTIC)) {
                         CAR_SPEED_CHARACTERISTIC_UUID = uid;
-                    }
+                    } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_BUZZER_CHARACTERISTIC)) {
+                        CAR_BUZZER_CHARACTERISTIC_UUID = uid;
+                    }  else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC)) {
+                    CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID = uid;
+                    setCharacteristicNotification(CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID, true);
+                }
 
                 }
 
@@ -218,23 +282,62 @@ public class BluetoothLeService extends Service {
         }
 
 
-//        // After Calling readCharateristic() results are hier
-//
-//        @Override
-//        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-//            if (status == BluetoothGatt.GATT_SUCCESS) {
-//                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-//                broadcastUpdate(EXTRA_DATA, characteristic); // ???????????????????????????????????????
-//                Log.i("CARAC", "CARACTERISTICA LEIDA onCharacteristicRead()");
-//            }
-//        }
+        // After Calling readCharateristic() results are hier
+
+        @Override
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                //broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                //broadcastUpdate(EXTRA_DATA, characteristic); // ???????????????????????????????????????
+                //Log.i("CARAC", "CARACTERISTICA LEIDA onCharacteristicRead()");
+            }
+        }
 
 
-//        @Override
-//        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-//            readCharacteristic(characteristic);
-//            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-//        }
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+            readCharacteristic(characteristic);
+            if (CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                tempHumidityNotificationData = characteristic.getValue();
+
+                //Data received via Bluetooth is  Little Endian
+
+                ////Calculate humidity, byte1, byte2, 4bits MSB from byte 3
+                long  h =  tempHumidityNotificationData[4]& 0xFF;
+                h <<= 8;
+                h |= tempHumidityNotificationData[3]& 0xFF;
+                h <<= 4;
+                h |= (tempHumidityNotificationData[2] >> 4) & 0x0F;
+                //humidityString = Long.toHexString(h);
+                humidityData = ((float)h * 100) / 0x100000;
+
+
+                //Calculate temp , 4bits LSB from byte 3, byte4, byte5
+                long tdata = (tempHumidityNotificationData[2] & 0x0F);
+                tdata <<= 8;
+                tdata |=  tempHumidityNotificationData[1]& 0xFF;
+                tdata <<= 8;
+                tdata |=  tempHumidityNotificationData[0]& 0xFF;
+                //tempString = Long.toHexString(tdata);
+                tempData = ((float)tdata * 200 / 0x100000) - 50;
+
+//                bluetoothFragmentViewModel.setTempSensor(tempData);
+//                bluetoothFragmentViewModel.setHumiditySensor(humidityData);
+
+//                sendDataToActivity();
+
+                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED);
+                if (tempData != null) {
+                    intent.putExtra("tempData", tempData);
+                }
+                if (tempData != null) {
+                    intent.putExtra("humidityData", humidityData);
+                }
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+            }
+           // broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+        }
 
 
     };
@@ -332,68 +435,79 @@ public class BluetoothLeService extends Service {
         Log.i("READ", "CHARACTERISTIC WAS RED");
     }
 
-//    //  Set notiofication for characteritic
-//    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic, boolean enabled) {
-//        if (bluetoothAdapter == null || bluetoothGatt == null) {
-//            return;
-//        }
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-//        if (PIN_CHARACTERISTIC.equals(characteristic.getUuid())){
-//            BluetoothGattDescriptor descriptor =   new BluetoothGattDescriptor(UUID.nameUUIDFromBytes(BLEUUID.CONFIG_UUID.getBytes()),
-//                    BluetoothGattDescriptor.PERMISSION_WRITE_SIGNED);
-//
-//            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//            bluetoothGatt.writeDescriptor(descriptor);
-//        }
-//    }
+    //  Set notiofication for characteritic
+    public void setCharacteristicNotification(UUID uuid, boolean enabled) {
+        if (bluetoothAdapter == null || bluetoothGatt == null) {
+            return;
+        }
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
 
-//    // Set Characteristic new Value
-//    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-//    public void sendCharacteristic(byte[] value, UUID uuid) {
-//
-//
-//        BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) mService.getCharacteristic(uuid);
-//
-//
-//        ch.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//
-//
-//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-//            // TODO: Consider calling
-//            //    ActivityCompat#requestPermissions
-//            // here to request the missing permissions, and then overriding
-//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-//            //                                          int[] grantResults)
-//            // to handle the case where the user grants the permission. See the documentation
-//            // for ActivityCompat#requestPermissions for more details.
-//            return;
-//        }
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//            bluetoothGatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//        }
-//
-//
-//    }
+        BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) mService.getCharacteristic(uuid);
+        bluetoothGatt.setCharacteristicNotification(ch, enabled);
+
+        // get Characteristics
+        gattDescriptors = ch.getDescriptors();
+
+        // Find instances for UUID if we know UUID String
+        for (BluetoothGattDescriptor gattDescriptor :
+                gattDescriptors) {
+            UUID uid = gattDescriptor.getUuid();
+
+            if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_TEMP_HUMIDITY_NOTIFICATION_CCCD_DESCRIPTOR)) {
+                CAR_TEMP_HUMIDITY_NOTIFICATION_DESCRIPTOR_CCCD_UUID = uid;
+                gattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                bluetoothGatt.writeDescriptor(gattDescriptor);
+            }
+
+        }
+
+
+        //if (PIN_CHARACTERISTIC.equals(characteristic.getUuid())){
+        //    BluetoothGattDescriptor descriptor =   new BluetoothGattDescriptor(uuid,BluetoothGattDescriptor.PERMISSION_READ);  // Permission read,
+        //BluetoothGattDescriptor descriptor = ch.getDescriptor(uuid);
+
+         //   descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+          //  UUID descrUUID = descriptor.getUuid();
+          //  bluetoothGatt.writeDescriptor(descriptor);
+        //}
+    }
+
+    // Set Characteristic new Value
+    @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
+    public void sendCharacteristic(byte[] value, UUID uuid) {
+
+
+        BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) mService.getCharacteristic(uuid);
+
+
+        ch.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            bluetoothGatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+        }
+
+
+    }
 
 
 
@@ -426,6 +540,11 @@ public class BluetoothLeService extends Service {
 //        String result = new String(value);
 //        Toast.makeText(context, result,  Toast.LENGTH_LONG);
 //    }
+
+
+
+
+
 
 
 }

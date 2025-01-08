@@ -39,7 +39,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.databinding.DataBindingUtil;
+import androidx.databinding.ViewDataBinding;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import android.os.*;
@@ -47,6 +52,8 @@ import android.widget.Toolbar;
 
 import com.example.navigationleftexample.R;
 import com.example.navigationleftexample.databinding.FragmentBluetoothBinding;
+import com.example.navigationleftexample.databinding.FragmentHomeBinding;
+import com.example.navigationleftexample.ui.ViewModels.BluetoothGameDataViewModel;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +65,8 @@ public class BluetoothFragment extends Fragment {
     private BluetoothAdapter mBluetoothAdapter;
     private String deviceAddress;
     private String CHANNEL_ID = "001";
+
+
 //    BluetoothDevice [] deviceArray;
 
     List<BluetoothDevice> deviceArray;
@@ -85,10 +94,12 @@ public class BluetoothFragment extends Fragment {
     // Stops scanning after 5 seconds.
     private static final long SCAN_PERIOD = 5000;
 
-    BluetoothViewModel bluetoothViewModel;
+    private BluetoothViewModel bluetoothViewModel;
 
+    BluetoothGameDataViewModel bluetoothGameViewModel;
     private static BluetoothLeService bluetoothService;
 
+    Intent gattServiceIntent;
 
     //LeDeviceListAdapter leDeviceListAdapter = new LeDeviceListAdapter(layoutInflater);
     LeDeviceListAdapter leDeviceListAdapter;
@@ -96,6 +107,9 @@ public class BluetoothFragment extends Fragment {
     private static final String TAG = "MessageBluetooth ";
 
 
+
+
+////////////  Implement !!!!
     private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -128,19 +142,22 @@ public class BluetoothFragment extends Fragment {
                 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    Define finish, Notification devise is not reacheble
             //    finish();
             }
+
+
+
+
+
+
             // perform device connection
             if (bluetoothService.connect(deviceAddress))
             {
                 Toast.makeText(getContext(), R.string.ble_connected, Toast.LENGTH_SHORT).show();
-
 
             }
             else
             {
                 Toast.makeText(getContext(), R.string.ble_not_connected, Toast.LENGTH_SHORT).show();
             }
-
-
 
         }
     }
@@ -343,10 +360,19 @@ public class BluetoothFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        bluetoothViewModel =
-                new ViewModelProvider(this).get(BluetoothViewModel.class);
+//        bluetoothViewModel =
+//                new ViewModelProvider(this).get(BluetoothViewModel.class);
+        bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
 
 
+
+
+
+
+
+//        LiveData<Float> da = bluetoothViewModel.getTempSensor();
+//        float d = da.getValue();
+//        bluetoothViewModel.setTempSensor(27);
 
         // create Broadcast channel
         createNotificationChannel();
@@ -375,8 +401,6 @@ public class BluetoothFragment extends Fragment {
 
         binding = FragmentBluetoothBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
-
 
 
         // Check Bluetooth Switch
@@ -508,10 +532,13 @@ public class BluetoothFragment extends Fragment {
                 bluetoothViewModel.setDevice(item);
 
                 //  Initialize Bluetooth Sertvice
-                Intent gattServiceIntent = new Intent(getContext(), BluetoothLeService.class);
+                gattServiceIntent = new Intent(getContext(), BluetoothLeService.class);
                 getContext().bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-
+                //  Pass Bluetooth View Model to Service to update Bluetooth DATA
+                Bundle b = new Bundle();
+                b.putParcelable("data", bluetoothViewModel);
+                gattServiceIntent.putExtra("bluetoothData",b);
 
                 final String deviceName = item.getName();
 

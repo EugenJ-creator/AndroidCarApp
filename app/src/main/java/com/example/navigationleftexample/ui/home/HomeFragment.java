@@ -2,6 +2,10 @@ package com.example.navigationleftexample.ui.home;
 
 import android.Manifest;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,14 +19,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.example.navigationleftexample.R;
+import com.example.navigationleftexample.ui.ViewModels.BluetoothGameDataViewModel;
+import com.example.navigationleftexample.ui.bluetooth.BluetoothViewModel;
 import com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar;
 import com.example.navigationleftexample.databinding.FragmentHomeBinding;
 import com.example.navigationleftexample.ui.bluetooth.BluetoothLeService;
@@ -44,12 +53,15 @@ public class HomeFragment extends Fragment {
 
 
     private ImageButton onButton;
+    private ImageButton signalButton;
+
 
     private static final String TAG = "HomeFragment ";
 
     private Handler handler = new Handler();
-
-
+    public HomeViewModel homeViewModel;
+//    private TextView tempView;
+//    private TextView humidityView;
 
 
     // Stearing iteration
@@ -59,6 +71,10 @@ public class HomeFragment extends Fragment {
     private final static int STERAANGLE_MAX = 140;
     private final static int STERAANGLE_MIN = 0;
     private final static int STERAANGLE_MIDDLE = 49;
+    private final static int BUZZER_MIDLE = 200;
+    private final static int BUZZER_OFF = 0;
+
+    public static int buzzerVolume = BUZZER_MIDLE;
     public static int stearEngle =  STERAANGLE_MIDDLE;
     public static int throttleProgress;
     public static int throttleBackProgress;
@@ -80,6 +96,9 @@ public class HomeFragment extends Fragment {
     AutoBrakeBackThread  autoBrakeBackThread = null;
     AutoStearThread  autoStearThread = null;
 
+    BluetoothViewModel bluetoothViewModel;
+
+    //BluetoothDataReceiver   bluetoothDataReceiver;
     Vibrator vibe = null;
 
     public class UpdateLeftButtonThread extends Thread {
@@ -423,26 +442,6 @@ public class HomeFragment extends Fragment {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public class UpdateBrakeThread extends Thread {
 
         private boolean running = false;
@@ -485,19 +484,55 @@ public class HomeFragment extends Fragment {
 
 
 
+    // Broadcast Receiver
+    BroadcastReceiver notificationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent!=null && intent.getAction()!=null){
+                if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED)){
+                   //str = intent.getFloatExtra("title", 66);
+                    //  Show Connected Bluetooth Device
 
 
+//                    bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
+                    binding.setBluetoothViewModelData(bluetoothViewModel);
+
+                    bluetoothViewModel.setTempSensor(intent.getFloatExtra("tempData", 66));
+                    bluetoothViewModel.setHumiditySensor(intent.getFloatExtra("humidityData", 66));
+//        // Show bluetooth device name in view
+//        bluetoothViewModel.getTempSensor().observe(getViewLifecycleOwner(), tempSensor -> {
+//        tempView.setText(tempSensor.intValue());
+//        });
+//
+//        bluetoothViewModel.getHumiditySensor().observe(getViewLifecycleOwner(), humiditySensor -> {
+//        humidityView.setText(humiditySensor.intValue());
+//        });
+
+                }
+            }
+        }
+    };
 
 
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        HomeViewModel homeViewModel =
-                new ViewModelProvider(this).get(HomeViewModel.class);
+
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
+        bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
+        binding.setBluetoothViewModelData(bluetoothViewModel);
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED);
+
+        LocalBroadcastManager.getInstance(this.getContext()).registerReceiver(notificationReceiver, intentFilter);
+
+
+
+
 
         vibe= (Vibrator) getContext().getSystemService(getContext().VIBRATOR_SERVICE) ;
 
@@ -513,10 +548,13 @@ public class HomeFragment extends Fragment {
         brakeButton = (ImageButton) binding.brake;
 
         onButton = (ImageButton) binding.onOffButton;
-
+        signalButton = (ImageButton) binding.signalOffButton;
 
         speedcarSeekBar = (SeekBar)binding.speedSeekBar;
         speedcarBackSeekBar = (SeekBar)binding.speedBackSeekBar;
+
+//        tempView = (TextView) binding.textViewTempValue;
+//        humidityView = (TextView) binding.textViewHumidityValue;
 
         speedcarSeekBar.setMin(MOTOR_POWER_MIN);
         speedcarSeekBar.setMax(MOTOR_POWER_MAX);
@@ -524,6 +562,7 @@ public class HomeFragment extends Fragment {
         speedcarBackSeekBar.setMin(MOTOR_POWER_MIN);
         speedcarBackSeekBar.setMax(MOTOR_POWER_MAX);
 
+        homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
 
         // Implenmenation of circular seekbar
         circularSeekBarStearing.setOnSeekBarChangeListener( new CircularSeekBar.OnCircularSeekBarChangeListener () {
@@ -640,7 +679,7 @@ public class HomeFragment extends Fragment {
                     direction=1;
                 }
                 byte[] dir =  new byte[1];
-                dir[0] = (byte) 0;
+                dir[0] = (byte) 1;
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
@@ -707,6 +746,40 @@ public class HomeFragment extends Fragment {
             }
         });
 
+        signalButton.setOnClickListener(new View.OnClickListener() {
+
+            int  on_off = 0;
+
+            @Override
+            public void onClick(View v) {
+
+                // TODO Auto-generated method stub
+                // Turn Signal ON
+                vibe.vibrate(50);
+
+                if (on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte )BUZZER_MIDLE;
+                        sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
+                    }
+                    signalButton.setImageResource(R.drawable.dashboard_signal_on);
+                    on_off=1;
+                } else
+                {
+                    // Turn your signal OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte )BUZZER_OFF;
+                        sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
+                    }
+                    signalButton.setImageResource(R.drawable.dashboard_signal_off);
+                    on_off=0;
+                }
+            }
+
+
+        });
 
 
 
@@ -909,11 +982,7 @@ public class HomeFragment extends Fragment {
         });
 
 
-
-
-
-
-        return root;
+         return root;
     }
 
 
@@ -946,12 +1015,19 @@ public class HomeFragment extends Fragment {
 
     }
 
+//    @Override
+//    public void onStop()
+//    {
+//        super.onStop();
+//        this.getContext().unregisterReceiver(bluetoothDataReceiver);           //<-- Unregister to avoid memoryleak
+//    }
+
 
 
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        binding = null;
+        LocalBroadcastManager.getInstance(this.getContext()).unregisterReceiver(notificationReceiver);
     }
 }

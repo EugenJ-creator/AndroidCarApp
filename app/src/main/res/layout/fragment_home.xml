@@ -1,17 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+        name="bluetoothViewModelData"
+        type="com.example.navigationleftexample.ui.bluetooth.BluetoothViewModel"/>
+    </data>
 
 
-    xmlns:tools="http://schemas.android.com/tools"
+
+<androidx.constraintlayout.widget.ConstraintLayout
+
+
     android:id="@+id/rootRL"
-
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/home_background"
     android:fitsSystemWindows="true"
     tools:context=".ui.home.HomeFragment">
 
+
+
+
+
+    <ImageView
+        android:layout_width="25dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginTop="204dp"
+        android:src="@drawable/dashboard_humidity"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
 
     <ImageView
         android:layout_width="36dp"
@@ -40,18 +68,24 @@
         app:navGraph="@navigation/mobile_navigation" />
 
 
-    <ImageView
+
+    <ImageButton
+        android:id="@+id/signalOffButton"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="92dp"
-        android:src="@drawable/dashboard_signal_on"
+        android:layout_marginStart="664dp"
+        android:layout_marginTop="128dp"
+        android:background="@null"
+        android:clickable="true"
+        android:src="@drawable/dashboard_signal_off"
         app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
+
+
 
     <ImageView
         android:layout_width="36dp"
@@ -225,7 +259,7 @@
         android:splitTrack="true"
         android:thumb="@drawable/arrow_circle_up"
         android:thumbOffset="20dp"
-        android:thumbTint="#4A8AFF"
+        android:thumbTint="#C8D5FF"
         app:defaultNavHost="true"
         app:layout_constraintHorizontal_bias="0.973"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -244,7 +278,7 @@
         android:splitTrack="true"
         android:thumb="@drawable/arrow_circle_up"
         android:thumbOffset="20dp"
-        android:thumbTint="#4A8AFF"
+        android:thumbTint="#C8D5FF"
         app:defaultNavHost="true"
         app:layout_constraintHorizontal_bias="0.805"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -307,7 +341,7 @@
         android:id="@+id/onOffButton"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="664dp"
+        android:layout_marginStart="504dp"
         android:layout_marginTop="128dp"
         android:background="@null"
         android:clickable="true"
@@ -319,7 +353,85 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
+    <TextView
+        android:id="@+id/textViewTempUnitMeasurment"
+        android:layout_width="16dp"
+        android:layout_height="17dp"
+        android:layout_marginStart="568dp"
+        android:layout_marginTop="60dp"
+        android:text="\u2103"
+        android:textColor="#03E3FC"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <TextView
+        android:id="@+id/textViewSpeedUnitMeasurment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="368dp"
+        android:layout_marginTop="56dp"
+        android:text="km/h"
+        android:textColor="#03E3FC"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <TextView
+        android:id="@+id/textViewSpeedValue"
+        android:layout_width="26dp"
+        android:layout_height="47dp"
+        android:layout_marginStart="340dp"
+        android:layout_marginTop="28dp"
+        android:text="5"
+        android:textColor="#FFFFFF"
+        android:textSize="40dp"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <TextView
+        android:id="@+id/textViewTempValue"
+        android:layout_width="61dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="512dp"
+        android:layout_marginTop="40dp"
+        android:text="@{bluetoothViewModelData.tempSensor.toString()}"
+        android:textColor="#FFFFFF"
+        android:textSize="30dp"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
+    <TextView
+        android:id="@+id/textViewHumidityValue"
+        android:layout_width="35dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="192dp"
+        android:text="@{bluetoothViewModelData.humiditySensor.toString()}"
+        android:textColor="#FFFFFF"
+        android:textSize="30dp"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
-
+    </layout>

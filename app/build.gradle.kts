@@ -7,6 +7,8 @@ android {
     namespace = "com.example.navigationleftexample"
     compileSdk = 34
 
+
+
     defaultConfig {
         applicationId = "com.example.navigationleftexample"
         minSdk = 31
@@ -32,6 +34,7 @@ android {
     }
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -52,6 +55,7 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.0")
     implementation("com.android.support:support-annotations:28.0.0")
     implementation("androidx.core:core-ktx:1.13.1")
+    implementation("com.google.firebase:firebase-crashlytics-buildtools:3.0.2")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
@@ -62,6 +66,7 @@ dependencies {
     implementation ("pub.devrel:easypermissions:3.0.0")
     implementation ("pub.devrel:easypermissions:2.0.1")
     implementation ("me.tankery.lib:circularSeekBar:1.4.2")
+
 
 
 }
