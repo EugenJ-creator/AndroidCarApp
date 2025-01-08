@@ -71,7 +71,7 @@ public class HomeFragment extends Fragment {
     private final static int STERAANGLE_MAX = 140;
     private final static int STERAANGLE_MIN = 0;
     private final static int STERAANGLE_MIDDLE = 49;
-    private final static int BUZZER_MIDLE = 200;
+    private final static int BUZZER_MIDLE = 5;  //200
     private final static int BUZZER_OFF = 0;
 
     public static int buzzerVolume = BUZZER_MIDLE;
@@ -765,7 +765,7 @@ public class HomeFragment extends Fragment {
                     }
                     signalButton.setImageResource(R.drawable.dashboard_signal_on);
                     on_off=1;
-                } else
+                } else if (on_off==1)
                 {
                     // Turn your signal OFF
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

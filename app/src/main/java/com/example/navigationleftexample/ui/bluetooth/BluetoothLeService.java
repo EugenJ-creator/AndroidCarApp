@@ -452,7 +452,7 @@ public class BluetoothLeService extends Service {
         }
 
         BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) mService.getCharacteristic(uuid);
-        bluetoothGatt.setCharacteristicNotification(ch, enabled);
+
 
         // get Characteristics
         gattDescriptors = ch.getDescriptors();
@@ -469,7 +469,7 @@ public class BluetoothLeService extends Service {
             }
 
         }
-
+        bluetoothGatt.setCharacteristicNotification(ch,  enabled);
 
         //if (PIN_CHARACTERISTIC.equals(characteristic.getUuid())){
         //    BluetoothGattDescriptor descriptor =   new BluetoothGattDescriptor(uuid,BluetoothGattDescriptor.PERMISSION_READ);  // Permission read,
