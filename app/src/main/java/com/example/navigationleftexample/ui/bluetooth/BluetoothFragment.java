@@ -1,8 +1,8 @@
 package com.example.navigationleftexample.ui.bluetooth;
 
-import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID;
-import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID;
-import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.CAR_SPEED_CHARACTERISTIC_UUID;
+//import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID;
+//import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID;
+//import static com.example.navigationleftexample.ui.bluetooth.BluetoothLeService.CAR_SPEED_CHARACTERISTIC_UUID;
 
 import android.Manifest;
 import android.app.NotificationChannel;
@@ -80,7 +80,7 @@ public class BluetoothFragment extends Fragment {
 
     private boolean connected = false;
 
-    private boolean scanning;
+    private boolean scanning = false;
     private Handler handler = new Handler();
 
     public static final String[] BLUETOOTH_PERMISSIONS_S = {Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT};
@@ -97,7 +97,9 @@ public class BluetoothFragment extends Fragment {
     private BluetoothViewModel bluetoothViewModel;
 
     BluetoothGameDataViewModel bluetoothGameViewModel;
-    private static BluetoothLeService bluetoothService;
+//    private static BluetoothLeService bluetoothService;
+    private  BluetoothLeService bluetoothService;
+
 
     Intent gattServiceIntent;
 
@@ -109,26 +111,26 @@ public class BluetoothFragment extends Fragment {
 
 
 
-////////////  Implement !!!!
-    private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
-                connected = true;
-                // Implement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                //updateConnectionState(R.string.connected);
-            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
-                connected = false;
-                // Implement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                //updateConnectionState(R.string.disconnected);
-            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
-                // Show all the supported services and characteristics on the user interface.
-//                displayGattServices(bluetoothService.getSupportedGattServices());
-                listGATTServices = bluetoothService.getSupportedGattServices();
-            }
-        }
-    };
+//////////////  Implement !!!!
+//    private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            final String action = intent.getAction();
+//            if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {
+//                connected = true;
+//                // Implement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                //updateConnectionState(R.string.connected);
+//            } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
+//                connected = false;
+//                // Implement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                //updateConnectionState(R.string.disconnected);
+//            } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
+//                // Show all the supported services and characteristics on the user interface.
+////                displayGattServices(bluetoothService.getSupportedGattServices());
+//                listGATTServices = bluetoothService.getSupportedGattServices();
+//            }
+//        }
+//    };
 
 
 
@@ -192,6 +194,7 @@ public class BluetoothFragment extends Fragment {
         super.onStop();
         Log.i(TAG, "onStop");
         stopScanLeDevice();
+        handler.removeCallbacksAndMessages(null);  // Cancel postDelayed
 //        bluetoothViewModel.setPairedDeviceToSavedStateHandle();
     }
 
@@ -307,6 +310,33 @@ public class BluetoothFragment extends Fragment {
             scanLeDevice();
         }
     }
+
+//    private void scanLeDevice() {
+//        if (!scanning) {
+//            // Stops scanning after a predefined scan period.
+//            handler.postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    scanning = false;
+//                    if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+//                        // TODO: Consider calling
+//                        //    ActivityCompat#requestPermissions
+//                        // here to request the missing permissions, and then overriding
+//                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                        //                                          int[] grantResults)
+//                        // to handle the case where the user grants the permission. See the documentation
+//                        // for ActivityCompat#requestPermissions for more details.
+//                        return;
+//                    }
+//                    bluetoothLeScanner.stopScan(leScanCallback);
+//                }
+//            }, SCAN_PERIOD);
+//
+//            scanning = true;
+//            bluetoothLeScanner.startScan(leScanCallback);
+//        }
+//    }
+
 
     // Stop Bluetooth scan
     private void stopScanLeDevice() {
@@ -535,10 +565,10 @@ public class BluetoothFragment extends Fragment {
                 gattServiceIntent = new Intent(getContext(), BluetoothLeService.class);
                 getContext().bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
 
-                //  Pass Bluetooth View Model to Service to update Bluetooth DATA
-                Bundle b = new Bundle();
-                b.putParcelable("data", bluetoothViewModel);
-                gattServiceIntent.putExtra("bluetoothData",b);
+//                //  Pass Bluetooth View Model to Service to update Bluetooth DATA
+//                Bundle b = new Bundle();
+//                b.putParcelable("data", bluetoothViewModel);
+//                gattServiceIntent.putExtra("bluetoothData",b);
 
                 final String deviceName = item.getName();
 
@@ -555,6 +585,10 @@ public class BluetoothFragment extends Fragment {
 
                 leDeviceListAdapter.removeDevice(item);
                 leDeviceListAdapter.notifyDataSetChanged();
+
+                //hs selected
+                stopScanLeDevice();
+                handler.removeCallbacksAndMessages(null);  // Cancel postDelay
 
 
             }
