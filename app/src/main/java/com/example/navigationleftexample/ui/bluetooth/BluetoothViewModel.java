@@ -25,13 +25,14 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
     private MutableLiveData<Float> tempSensor;
     private MutableLiveData<Float> humiditySensor;
 
-
+    private MutableLiveData<Float> speedSensor;
 
 
     public BluetoothViewModel() {
 
         tempSensor = new MutableLiveData<>();
         humiditySensor = new MutableLiveData<>();
+        speedSensor = new MutableLiveData<>();
         selectedDevice = new MutableLiveData<BluetoothDevice>();
         switchButton = new MutableLiveData<Switch>();
     }
@@ -47,6 +48,9 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
     public LiveData<Float> getHumiditySensor() {
         return humiditySensor;
     }
+    public LiveData<Float> getSpeedSensor() {
+        return speedSensor;
+    }
 
 
     public void setTempSensor(float temp){
@@ -55,6 +59,11 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
 
     public void setHumiditySensor(float humidity){
         humiditySensor.setValue(humidity);
+    }
+
+
+    public void setSpeedSensor(float speed){
+        speedSensor.setValue(speed);
     }
 
 

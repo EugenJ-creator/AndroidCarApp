@@ -60,11 +60,14 @@ public class BluetoothLeService extends Service {
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
     private static final long READ_MAGNETOMETR_CHARACTERISTIC_ITERATION=400;
+    private static final long READ_SPEED_SENSOR_CHARACTERISTIC_ITERATION=400;
     private static final long READ_TEMP_HUMIDITY_CHARACTERISTIC_ITERATION=1000;
     private final double[][] euler = {{1.225434,-0.028676,0.069206},{-0.028676,1.087208,0.045837},{0.069206,0.045837,1.057089}};
 
     private ReadCharacteristicTempHumidityThread readCharacteristicTempHumidityThread = null;
     private ReadCharacteristicMagnetometerThread readCharacteristicMagnetometerThread = null;
+    private ReadCharacteristicSpeedSensorThread readCharacteristicSpeedSensorThread = null;
+
     public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "com.example.bluetooth.le.ACTION_GATT_SERVICES_DISCOVERED";
@@ -79,6 +82,9 @@ public class BluetoothLeService extends Service {
     public static UUID CAR_BUZZER_CHARACTERISTIC_UUID;
     public static UUID CAR_MAGNETOMETER_CHARACTERISTIC_UUID;
     public static UUID CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID;
+    public static UUID CAR_SPEED_SENSOR_CHARACTERISTIC_UUID;
+    public static UUID CAR_OPTIONS_CHARACTERISTIC_UUID;
+
 //    public static UUID CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID;
 //    public static UUID CAR_MAGNETOMETER_NOTIFICATION_CHARACTERISTIC_UUID;
 
@@ -89,8 +95,7 @@ public class BluetoothLeService extends Service {
     public byte[] tempHumidityNotificationData;
     public byte[] magnetometerNotificationData;
     public byte[] buzzerWrittenData;
-
-
+    public byte[] speedSensorData;
 
 
 
@@ -151,6 +156,8 @@ public class BluetoothLeService extends Service {
     public static final String ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY = "ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY";
     public static final String ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER = "ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER";
     public static final String ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE = "ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE";
+    public static final String ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE = "ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE";
+
     List<BluetoothGattCharacteristic> notificationChars = new ArrayList<>();
     public static List<BluetoothGattCharacteristic> notificationDeactivateChars = new ArrayList<>();
 
@@ -180,6 +187,9 @@ public class BluetoothLeService extends Service {
         public static final String CAR_BUZZER_CHARACTERISTIC = "0000ffe4-0000-1000-8000-00805f9b34fb";
         public static final String CAR_TEMP_HUMIDITY_CHARACTERISTIC = "0000ffe5-0000-1000-8000-00805f9b34fb";
         public static final String CAR_MAGNETOMETER_CHARACTERISTIC = "0000ffe6-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_SPEED_SENSOR_CHARACTERISTIC = "0000ffe7-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_OPTIONS_CHARACTERISTIC = "0000ffe8-0000-1000-8000-00805f9b34fb";
+
 //        public static final String CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC = "0000ffe5-0000-1000-8000-00805f9b34fb";
 //        public static final String CAR_MAGNETOMETER_NOTIFICATION_CHARACTERISTIC = "0000ffe6-0000-1000-8000-00805f9b34fb";
 //        public static final String CAR_NOTIFICATION_CCCD_DESCRIPTOR = "00002902-0000-1000-8000-00805f9b34fb";
@@ -370,6 +380,10 @@ public class BluetoothLeService extends Service {
                         CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID = uid;
                     } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_MAGNETOMETER_CHARACTERISTIC)) {
                         CAR_MAGNETOMETER_CHARACTERISTIC_UUID = uid;
+                    } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_SPEED_SENSOR_CHARACTERISTIC)) {
+                        CAR_SPEED_SENSOR_CHARACTERISTIC_UUID = uid;
+                    } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_OPTIONS_CHARACTERISTIC)) {
+                        CAR_OPTIONS_CHARACTERISTIC_UUID = uid;
                     }
 
 
@@ -390,6 +404,8 @@ public class BluetoothLeService extends Service {
                 readCharacteristicMagnetometerThread.start();
                 readCharacteristicTempHumidityThread = new ReadCharacteristicTempHumidityThread();
                 readCharacteristicTempHumidityThread.start();
+                readCharacteristicSpeedSensorThread = new ReadCharacteristicSpeedSensorThread();
+                readCharacteristicSpeedSensorThread.start();
 
                 //subscribeToCharacteristics(gatt);
 
@@ -437,6 +453,14 @@ public class BluetoothLeService extends Service {
                 Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
                 if (buzzerWrittenData != null) {
                     intent.putExtra("buzzerData", buzzerWrittenData);
+                }
+                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+            } else if (CAR_SPEED_SENSOR_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                speedSensorData = characteristic.getValue();
+
+                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE);
+                if (speedSensorData != null) {
+                    intent.putExtra("speedSensorData", speedSensorData);
                 }
                 LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
             }
@@ -1071,5 +1095,48 @@ public class BluetoothLeService extends Service {
 
         }
     }
+
+
+
+    public class ReadCharacteristicSpeedSensorThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted() ) {
+
+                    readCharacteristic(CAR_SPEED_SENSOR_CHARACTERISTIC_UUID);
+                    Thread.sleep(READ_SPEED_SENSOR_CHARACTERISTIC_ITERATION);
+
+
+
+                }
+                return;
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+
+
+        }
+    }
+
+
+
+
+
 
 }

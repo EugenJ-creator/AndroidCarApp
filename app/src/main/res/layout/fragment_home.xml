@@ -138,18 +138,6 @@
         app:navGraph="@navigation/mobile_navigation" />
 
 
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="140dp"
-        android:src="@drawable/dashboard_cruise_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
 
 
     <ImageView
@@ -377,6 +365,22 @@
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
 
+    <ImageButton
+        android:id="@+id/cruiseButtonOff"
+        android:layout_width="48dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="68dp"
+        android:layout_marginTop="140dp"
+        android:background="@null"
+        android:clickable="true"
+        android:src="@drawable/dashboard_cruise_off"
+        app:layout_constraintHorizontal_bias="0.953"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:navGraph="@navigation/mobile_navigation" />
+
     <TextView
         android:id="@+id/textViewTempUnitMeasurment"
         android:layout_width="16dp"
@@ -398,7 +402,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="368dp"
         android:layout_marginTop="56dp"
-        android:text="km/h"
+        android:text="m/s"
         android:textColor="#03E3FC"
         app:layout_constraintHorizontal_bias="0.953"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -409,11 +413,11 @@
 
     <TextView
         android:id="@+id/textViewSpeedValue"
-        android:layout_width="26dp"
-        android:layout_height="47dp"
-        android:layout_marginStart="340dp"
-        android:layout_marginTop="28dp"
-        android:text="5"
+        android:layout_width="129dp"
+        android:layout_height="42dp"
+        android:layout_marginStart="236dp"
+        android:layout_marginTop="36dp"
+        android:text="@{bluetoothViewModelData.speedSensor.toString()}"
         android:textColor="#FFFFFF"
         android:textSize="40dp"
         app:layout_constraintHorizontal_bias="0.953"

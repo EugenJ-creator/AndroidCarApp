@@ -64,6 +64,7 @@ public class HomeFragment extends Fragment {
 
 
     private ImageButton onButton;
+    private ImageButton cruiseButton;
     private ImageButton signalButton;
 
     private ImageView compassNorthDirection;
@@ -90,6 +91,7 @@ public class HomeFragment extends Fragment {
     private final static int BUZZER_MIDLE = 5;  //200
     private final static int BUZZER_OFF = 0;
 
+    public static int optionsToggle = 0;
     public static int buzzerVolume = BUZZER_MIDLE;
     public static int stearEngle =  STERAANGLE_MIDDLE;
     public static int throttleProgress;
@@ -648,6 +650,34 @@ public class HomeFragment extends Fragment {
 //                    compassNorthDirection.setRotation((float)(intent.getDoubleExtra("angleCompass", 0)));
 
 
+                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE)) {
+
+                    byte[] speedSensorNotificationData = intent.getByteArrayExtra("speedSensorData");
+
+                    float speed;
+                    //Data received via Bluetooth is  Little Endian
+
+                    //Calculate period
+                    long period = speedSensorNotificationData[0] & 0xFF;
+                    period <<= 8;
+                    period |= speedSensorNotificationData[1] & 0xFF;
+                    period <<= 8;
+                    period |= speedSensorNotificationData[2] & 0xFF;
+
+                    if (period == 0){
+                        speed = 0;
+                    } else {
+                        // (( (3,6 grad * pi)/180 grad ) rad /  T ) * 0.032 m   = m/s
+                        speed = (float) (((0.0628 * 1000000000) / (Float.valueOf(period) * 12.5)) * 0.032);
+                    }
+                    binding.setBluetoothViewModelData(bluetoothViewModel);
+
+                    bluetoothViewModel.setSpeedSensor(speed);
+
+
+
+
+
                 }
             }
         }
@@ -668,7 +698,7 @@ public class HomeFragment extends Fragment {
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY);
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER);
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
-
+        intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE);
 
         LocalBroadcastManager.getInstance(this.getContext()).registerReceiver(notificationReceiver, intentFilter);
 
@@ -691,6 +721,7 @@ public class HomeFragment extends Fragment {
         brakeButton = (ImageButton) binding.brake;
 
         onButton = (ImageButton) binding.onOffButton;
+        cruiseButton = (ImageButton) binding.cruiseButtonOff;
         compassNorthDirection = (ImageView) binding.nordCompass;
 
         signalButton = (ImageButton) binding.signalOffButton;
@@ -876,6 +907,41 @@ public class HomeFragment extends Fragment {
                 }
             }
         });
+
+
+        cruiseButton.setOnClickListener(new View.OnClickListener() {
+
+            int  on_off = 0;
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                // Turn Car ON
+                vibe.vibrate(50);
+
+                if (on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle|0x01);
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                    }
+                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_on);
+                    on_off=1;
+                } else
+                {
+                    // Turn your car OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x01));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                    }
+                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_off);
+                    on_off=0;
+                }
+            }
+        });
+
+
 
         signalButton.setOnClickListener(new View.OnClickListener() {
 
