@@ -36,6 +36,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import com.example.navigationleftexample.ui.bluetooth.Characteristic;
 
 import com.example.navigationleftexample.R;
 import com.example.navigationleftexample.ui.ViewModels.BluetoothGameDataViewModel;
@@ -83,12 +84,14 @@ public class HomeFragment extends Fragment {
     private Double Z_Magnetometer_Data;
     // Stearing iteration
     private static final long ITERATION_PERIOD_MOTOR_POWER= 1;
-    private static final long ITERATION_PERIOD_STEAR_ANGLE=5;
+    private static final long ITERATION_PERIOD_STEAR_ANGLE= 5;
+
+    private static final long DELAY_PRESS_POWER= 300;
 
     private final static int STERAANGLE_MAX = 140;
     private final static int STERAANGLE_MIN = 0;
     private final static int STERAANGLE_MIDDLE = 49;
-    private final static int BUZZER_MIDLE = 5;  //200
+    private final static int BUZZER_MIDLE = 200;  //200
     private final static int BUZZER_OFF = 0;
 
     public static int optionsToggle = 0;
@@ -98,9 +101,14 @@ public class HomeFragment extends Fragment {
     public static int throttleBackProgress;
     public static int direction = 0;
 
+    private int last_progress = 0;
+
     private final static int MOTOR_POWER_MAX = 250;
     private final static int MOTOR_POWER_MIN = 0;
     public static int motorPower = MOTOR_POWER_MIN;
+
+    private int stearingPressingAvailable = 1;
+    private int powerPressingAvailable = 1;
 
     private FragmentHomeBinding binding;
     private  BluetoothLeService bluetoothService;
@@ -113,6 +121,8 @@ public class HomeFragment extends Fragment {
     AutoBrakeThread  autoBrakeThread = null;
     AutoBrakeBackThread  autoBrakeBackThread = null;
     AutoStearThread  autoStearThread = null;
+
+
 
     BluetoothViewModel bluetoothViewModel;
 
@@ -195,11 +205,15 @@ public class HomeFragment extends Fragment {
                 byte[] val = new byte[1];
                 val[0] = (byte) STERAANGLE_MAX;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+                    BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                    //sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
                 }
             }
         }
     }
+
+
+
 
 
     public class UpdateRightButtonThread extends Thread {
@@ -223,7 +237,8 @@ public class HomeFragment extends Fragment {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     byte[] val =  new byte[1];
                     val[0] = (byte )stearEngle;
-                    sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+                    BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                    //sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
                 }
                 try {
                     Thread.sleep(ITERATION_PERIOD_MOTOR_POWER);
@@ -589,15 +604,15 @@ public class HomeFragment extends Fragment {
 //        });
 
 
-                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE)) {
-                    byte[] buzzerNotificationData = intent.getByteArrayExtra("buzzerData");
-                    if (buzzerNotificationData[0] == 0) {
-                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
-                        signal_on_off = 0;
-                    } else if (buzzerNotificationData[0] == BUZZER_MIDLE) {
-                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
-                        signal_on_off = 1;
-                    }
+//                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE)) {
+//                    byte[] buzzerNotificationData = intent.getByteArrayExtra("buzzerData");
+//                    if (buzzerNotificationData[0] == 0) {
+//                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
+//                        signal_on_off = 0;
+//                    } else if (buzzerNotificationData[0] == BUZZER_MIDLE) {
+//                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
+//                        signal_on_off = 1;
+//                    }
                 } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER)) {
 
                     byte[] magnetometerNotificationData = intent.getByteArrayExtra("XYZCompass");
@@ -745,12 +760,15 @@ public class HomeFragment extends Fragment {
             @Override
             public void onProgressChanged(CircularSeekBar circularSeekBar, int progress, boolean fromUser) {
                 // TODO Insert your code here
+
                 stearEngle = progress;
 
-                byte[] val =  new byte[1];
-                val[0] = (byte )(progress & 0xFF);
+                byte[] val = new byte[1];
+                val[0] = (byte) (progress & 0xFF);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+
+                    //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE));
+                    sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 }
             }
 
@@ -776,40 +794,46 @@ public class HomeFragment extends Fragment {
         speedcarSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
-                throttleProgress = progress&0xFF;
+                if (progress<40) {
+                    throttleProgress = 0;
+                } else {
+                    throttleProgress = progress & 0xFF;
+                }
                 byte[] val = new byte[1];
                 val[0] = (byte) throttleProgress;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    sendCharacteristic(val, BluetoothLeService.CAR_SPEED_FORWARD_CHARACTERISTIC_UUID);
+                    //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_SPEED_FORWARD_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                    sendCharacteristic(val, BluetoothLeService.CAR_SPEED_FORWARD_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 }
-
             }
+
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                if (autoBrakeThread!=null) {
-                    autoBrakeThread.setRunning(false);
-                    autoBrakeThread.interrupt();
-                }
-                // Change direction
-//
-//                if (direction!=0){
-//                    direction=0;
+
+                speedcarBackSeekBar.setProgress(0);
+//                if (autoBrakeBackThread!=null) {
+//                    autoBrakeBackThread.setRunning(false);
+//                    autoBrakeBackThread.interrupt();
 //                }
-//                byte[] dir =  new byte[1];
-//                dir[0] = (byte) 0;
-//
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                    sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
+//                autoBrakeBackThread = new AutoBrakeBackThread();
+//                autoBrakeBackThread.start();
+
+
+//                if (autoBrakeThread!=null) {
+//                    autoBrakeThread.setRunning(false);
+//                    autoBrakeThread.interrupt();
 //                }
+
 
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                autoBrakeThread = new AutoBrakeThread();
-                autoBrakeThread.start();
+
+
+//                autoBrakeThread = new AutoBrakeThread();
+//                autoBrakeThread.start();
 
             }
 
@@ -824,35 +848,35 @@ public class HomeFragment extends Fragment {
                 byte[] val = new byte[1];
                 val[0] = (byte) throttleBackProgress;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    sendCharacteristic(val, BluetoothLeService.CAR_SPEED_BACKWARD_CHARACTERISTIC_UUID);
+                    //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_SPEED_BACKWARD_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                    sendCharacteristic(val, BluetoothLeService.CAR_SPEED_BACKWARD_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 }
 
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                if (autoBrakeBackThread!=null) {
-                    autoBrakeBackThread.setRunning(false);
-                    autoBrakeBackThread.interrupt();
-                }
-                // Change direction
+                speedcarSeekBar.setProgress(0);
+//                if (autoBrakeThread!=null) {
+//                autoBrakeThread.setRunning(false);
+//                autoBrakeThread.interrupt();
+//                }
+//                autoBrakeThread = new AutoBrakeThread();
+//                autoBrakeThread.start();
 
-//                if (direction!=1){
-//                    direction=1;
+//                if (autoBrakeBackThread!=null) {
+//                    autoBrakeBackThread.setRunning(false);
+//                    autoBrakeBackThread.interrupt();
 //                }
-//                byte[] dir =  new byte[1];
-//                dir[0] = (byte) 1;
-//
-//                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-//                    sendCharacteristic(dir, BluetoothLeService.DIRECTION_CHARACTERISTIC_UUID);
-//                }
+
 
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                autoBrakeBackThread = new AutoBrakeBackThread();
-                autoBrakeBackThread.start();
+
+//                autoBrakeBackThread = new AutoBrakeBackThread();
+//                autoBrakeBackThread.start();
 
             }
 
@@ -895,7 +919,8 @@ public class HomeFragment extends Fragment {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
                         val[0] = (byte )STERAANGLE_MIDDLE;
-                        sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        //sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
                     }
                     onButton.setImageResource(R.drawable.dashboard_on_on);
                     on_off=1;
@@ -923,7 +948,8 @@ public class HomeFragment extends Fragment {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
                         val[0] = (byte) ((byte )optionsToggle|0x01);
-                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                        BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        //sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
                     }
                     cruiseButton.setImageResource(R.drawable.dashboard_cruise_on);
                     on_off=1;
@@ -933,7 +959,8 @@ public class HomeFragment extends Fragment {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
                         val[0] = (byte) ((byte )optionsToggle&(~0x01));
-                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                        BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        //sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
                     }
                     cruiseButton.setImageResource(R.drawable.dashboard_cruise_off);
                     on_off=0;
@@ -958,30 +985,25 @@ public class HomeFragment extends Fragment {
                             byte[] val = new byte[1];
                             val[0] = (byte) BUZZER_MIDLE;
 
-
-                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
-
-
+                            BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                            //sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
 
                         }
-//                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
-//                        signal_on_off = 1;
+                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
+                        signal_on_off = 1;
                     } else if (signal_on_off == 1) {
                         // Turn your signal OFF
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             byte[] val = new byte[1];
                             val[0] = (byte) BUZZER_OFF;
 
-
-                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
+                            BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                            //sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
                         }
-//                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
-//                        signal_on_off = 0;
+                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
+                        signal_on_off = 0;
                     }
-
             }
-
-
         });
 
 
@@ -1229,15 +1251,13 @@ public class HomeFragment extends Fragment {
 
     // Set Characteristic new Value
     @RequiresApi(api = Build.VERSION_CODES.TIRAMISU)
-    public boolean sendCharacteristic(byte[] value, UUID uuid) {
+    public boolean sendCharacteristic(byte[] value, UUID uuid, int WriteType) {
 
 //        bluetoothGatt = bluetoothService.getBluetoothGatt();
 //        BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) bluetoothService.getmService().getCharacteristic(uuid);
 
 
         BluetoothGattCharacteristic ch = (BluetoothGattCharacteristic) BluetoothLeService.getmService().getCharacteristic(uuid);
-        ch.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-
 
         if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -1255,71 +1275,25 @@ public class HomeFragment extends Fragment {
 
             BluetoothGatt gatt = BluetoothLeService.getBluetoothGatt();
 
-            synchronized (BluetoothLeService.mDeviceBusy) {
-                if (BluetoothLeService.mDeviceBusy) return false;
-                BluetoothLeService.mDeviceBusy = true;
-            }
-
-
-            if (BluetoothLeService.executeCharacteristicList.isEmpty()) {
-                int result = gatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-
-                if (result != 0) {
-                    Log.w(TAG, "writeCharacteristic() is failed, returns !=0");
-                    return false;
-                } else {
-                    BluetoothLeService.executeCharacteristicList.add(ch);
+            if (WriteType == BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) {
+                synchronized (BluetoothLeService.mDeviceBusy) {
+                    if (BluetoothLeService.mDeviceBusy) return false;
+                    BluetoothLeService.mDeviceBusy = true;
                 }
 
 
-//            BluetoothGattCharacteristic ch1 = (BluetoothGattCharacteristic) BluetoothLeService.getmService().getCharacteristic(UUID.fromString(BluetoothLeService.BLEUUID.CAR_MAGNETOMETER_NOTIFICATION_CHARACTERISTIC));
-//            BluetoothLeService.notificationDeactivateChars.add(ch1);
-//            BluetoothGattCharacteristic ch2 = (BluetoothGattCharacteristic) BluetoothLeService.getmService().getCharacteristic(UUID.fromString(BluetoothLeService.BLEUUID.CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC));
-//            BluetoothLeService.notificationDeactivateChars.add(ch2);
-//
-//            if (BluetoothLeService.wtiteCharBuzzer.isEmpty()) {
-//                BluetoothLeService.wtiteCharBuzzer.add(ch);
-//                BluetoothLeService.wtiteCharBuzzerValue.add(value);
-//            }
-//
-//
-//            unSubscribeNoticationCharacteristics(gatt);
+                if (BluetoothLeService.executeCharacteristicList.isEmpty()) {
+                    int result = gatt.writeCharacteristic(ch, value, WriteType);
 
-
-//            if (uuid.toString().equals(BluetoothLeService.BLEUUID.CAR_BUZZER_CHARACTERISTIC)){
-//                if (BluetoothLeService.wtiteCharBuzzer.isEmpty()) {
-//                    int result = gatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//
-//                    if (result != 0) {
-//                        Log.w(TAG, "writeCharacteristic() is failed, returns !=0");
-//                    } else {
-//                        BluetoothLeService.wtiteCharBuzzer.add(ch);
-//                    }
-//                }
-//            } else if (uuid.toString().equals(BluetoothLeService.BLEUUID.STEERING_ANGLE_CHARACTERISTIC)) {
-//                if (BluetoothLeService.wtiteStearingAngle.isEmpty()) {
-//                    int result = gatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//
-//                    if (result != 0) {
-//                        Log.w(TAG, "writeCharacteristic() is failed, returns !=0");
-//                    } else {
-//                        BluetoothLeService.wtiteStearingAngle.add(ch);
-//                    }
-//                }
-//
-//            }
-
-
-//            if (bluetoothGatt == null) {
-//                Log.w(TAG, "BluetoothGatt not initialized");
-//                return;
-//            }
-
-                //    bluetoothGatt.beginReliableWrite();
-                //gatt.beginReliableWrite().
-                //    bluetoothGatt.writeCharacteristic(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-//
-//            bluetoothGatt.getServ(ch, value, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    if (result != 0) {
+                        Log.w(TAG, "writeCharacteristic() is failed, returns !=0");
+                        return false;
+                    } else {
+                        BluetoothLeService.executeCharacteristicList.add(ch);
+                    }
+                }
+            } else {
+                int result = gatt.writeCharacteristic(ch, value, WriteType);
             }
         }
         return true;
