@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -61,14 +62,20 @@ public class HomeFragment extends Fragment {
     private ImageButton leftButton;
     private ImageButton rightButton;
     private ImageButton thrrottleButton;
-    private ImageButton brakeButton;
+    private ImageButton warningButton;
 
 
     private ImageButton onButton;
     private ImageButton cruiseButton;
     private ImageButton signalButton;
+    private ImageButton autoLight;
+    private ImageButton highBeam;
+    private ImageButton parkingLight;
 
     private ImageView compassNorthDirection;
+
+    private ImageView leftBlinker;
+    private ImageView rightBlinker;
     private static final String TAG = "HomeFragment ";
 
     private Handler handler = new Handler();
@@ -83,25 +90,32 @@ public class HomeFragment extends Fragment {
     private Double Y_Magnetometer_Data;
     private Double Z_Magnetometer_Data;
     // Stearing iteration
-    private static final long ITERATION_PERIOD_MOTOR_POWER= 1;
-    private static final long ITERATION_PERIOD_STEAR_ANGLE= 5;
+    private static final long ITERATION_PERIOD_MOTOR_POWER = 1;
+    private static final long ITERATION_PERIOD_STEAR_ANGLE = 5;
+    private static final long ITERATION_PERIOD_LEFT_RIGHT_BLINKING = 950;     //    blinking period of led /2
 
     private static final long DELAY_PRESS_POWER= 300;
 
     private final static int STERAANGLE_MAX = 140;
     private final static int STERAANGLE_MIN = 0;
     private final static int STERAANGLE_MIDDLE = 49;
-    private final static int BUZZER_MIDLE = 200;  //200
+    private final static int BUZZER_MIDLE = 20;  //200
     private final static int BUZZER_OFF = 0;
 
     public static int optionsToggle = 0;
+    public static int warningBlinkingActive = 0;
     public static int buzzerVolume = BUZZER_MIDLE;
     public static int stearEngle =  STERAANGLE_MIDDLE;
     public static int throttleProgress;
     public static int throttleBackProgress;
     public static int direction = 0;
 
-    private int last_progress = 0;
+//    public static int readDone = 0;  //    If the last read was done
+
+    public static byte optionsLastState = 0; //     For comparing with the new one revceived from OnWrite Function
+
+    public int StearingDirection = 0;    //   Indicating the direction of stearing to blink leds
+    private int LastSpeedState = 0;   //   Last Speed state. o or some value
 
     private final static int MOTOR_POWER_MAX = 250;
     private final static int MOTOR_POWER_MIN = 0;
@@ -113,6 +127,8 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private  BluetoothLeService bluetoothService;
 
+    MediaPlayer mediaPlayerOnBlinking;
+    MediaPlayer mediaPlayerOffBlinking;
     UpdateLeftButtonThread myUpdateLeftButtonThread = null;
     UpdateRightButtonThread myUpdateRightButtonThread = null;
 //    UpdateThrottleGasThread myUpdateThrottleGasThread = null;
@@ -122,14 +138,22 @@ public class HomeFragment extends Fragment {
     AutoBrakeBackThread  autoBrakeBackThread = null;
     AutoStearThread  autoStearThread = null;
 
+    BlinkingTimerLeftThread blinkingTimerLeftThread = null;
+    BlinkingTimerRightThread blinkingTimerRightThread = null;
 
+    BlinkingTimerWarningThread blinkingTimerWarningThread = null;
 
     BluetoothViewModel bluetoothViewModel;
 
     //BluetoothDataReceiver   bluetoothDataReceiver;
     Vibrator vibe = null;
-    int  signal_on_off = 0;   // Buzzer function
-
+    int  signal_on_off = 0;   // Buzzer button state
+    int  cruise_on_off = 0;  //   state
+    int  warningLight_on_off = 0;   // state
+    int  lightAuto_on_off = 0;   //  state
+    int  hightBeam_on_off = 0;   //  state
+    int  parkingLight_on_off = 0;   // state
+    int  startButton_on_off = 0;   //  state
     public static double[] multiplyMatrix(double[][] matrix, double[] vector) {
         double[] res = new double[vector.length];
 
@@ -166,6 +190,141 @@ public class HomeFragment extends Fragment {
             bluetoothService = null;
         }
     };
+
+    public class BlinkingTimerWarningThread extends Thread {
+
+        private boolean running = false;
+        private boolean status = false;
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+            warningBlinkingActive = 1;
+            try {
+                while(!Thread.currentThread().isInterrupted() ) {
+                    if (status == false){
+                        warningButton.setImageResource(R.drawable.dashboard_warning_off);
+                        leftBlinker.setImageResource(R.drawable.dashboard_left_off);
+                        rightBlinker.setImageResource(R.drawable.dashboard_right_off);
+                        mediaPlayerOffBlinking.start();
+                        status = true;
+
+                    } else if (status == true){
+                        warningButton.setImageResource(R.drawable.dashboard_warning_on);
+                        leftBlinker.setImageResource(R.drawable.dashboard_left_on);
+                        rightBlinker.setImageResource(R.drawable.dashboard_right_on);
+                        mediaPlayerOnBlinking.start();
+                        status = false;
+                    }
+                    Thread.sleep(ITERATION_PERIOD_LEFT_RIGHT_BLINKING);
+                }
+                return;
+            }  catch
+            (InterruptedException e) {
+                warningBlinkingActive = 0;
+                leftBlinker.setImageResource(R.drawable.dashboard_left_off);
+                rightBlinker.setImageResource(R.drawable.dashboard_right_off);
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+        }
+
+    }
+
+
+    public class BlinkingTimerLeftThread extends Thread {
+
+        private boolean running = false;
+        private boolean status = false;
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted() ) {
+                    if (status == false){
+                        if (warningBlinkingActive != 1) {
+                            leftBlinker.setImageResource(R.drawable.dashboard_left_on);
+                            mediaPlayerOnBlinking.start();
+                        }
+                        status = true;
+
+                    } else if (status == true){
+                        if (warningBlinkingActive != 1) {
+                            leftBlinker.setImageResource(R.drawable.dashboard_left_off);
+                            mediaPlayerOffBlinking.start();
+                        }
+                        status = false;
+                    }
+                Thread.sleep(ITERATION_PERIOD_LEFT_RIGHT_BLINKING);
+                }
+                return;
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+        }
+    }
+
+
+    public class BlinkingTimerRightThread extends Thread {
+
+        private boolean running = false;
+        private boolean status = false;
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted() ) {
+                    if (status == false){
+                        if (warningBlinkingActive != 1) {
+                            rightBlinker.setImageResource(R.drawable.dashboard_right_on);
+                            mediaPlayerOnBlinking.start();
+                        }
+                        status = true;
+
+                    } else if (status == true){
+                        if (warningBlinkingActive != 1) {
+                            rightBlinker.setImageResource(R.drawable.dashboard_right_off);
+                            mediaPlayerOffBlinking.start();
+                        }
+                        status = false;
+                    }
+                    Thread.sleep(ITERATION_PERIOD_LEFT_RIGHT_BLINKING);
+                }
+                return;
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+        }
+    }
 
 
     public class UpdateLeftButtonThread extends Thread {
@@ -604,16 +763,115 @@ public class HomeFragment extends Fragment {
 //        });
 
 
-//                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE)) {
-//                    byte[] buzzerNotificationData = intent.getByteArrayExtra("buzzerData");
-//                    if (buzzerNotificationData[0] == 0) {
-//                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
-//                        signal_on_off = 0;
+
+                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE)) {       //  Buzzer
+                    byte[] buzzerNotificationData = intent.getByteArrayExtra("buzzerData");
+                    if (buzzerNotificationData[0] == 0) {
+                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
+                        signal_on_off = 0;
+                    } else if (buzzerNotificationData[0] == BUZZER_MIDLE) {
+                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
+                        signal_on_off = 1;
+                    }
+                }
+//                else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_LAST_READ_DONE)) {       //  Buzzer
+//                    readDone = 1;
+//                }
+//                }  else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_START_VALUE)) {       //  Start  , change to options !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//                    byte[] startNotificationData = intent.getByteArrayExtra("startData");
+//                    if (startNotificationData[0] == 0) {
+//                        onButton.setImageResource(R.drawable.dashboard_off_on);
+//                        startButton_on_off=0;
 //                    } else if (buzzerNotificationData[0] == BUZZER_MIDLE) {
-//                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
-//                        signal_on_off = 1;
+//                        onButton.setImageResource(R.drawable.dashboard_on_on);
+//                        startButton_on_off=1;
 //                    }
-                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER)) {
+//
+//                }
+                else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_OPTION_VALUE)) {
+                    byte[] optionsNotificationData = intent.getByteArrayExtra("optionsData");
+                    if (((optionsNotificationData[0]^optionsLastState)&0x1) == 0x1) {               // cruise
+                        if ((optionsNotificationData[0] & 0x1) == 0x1) {
+                            cruiseButton.setImageResource(R.drawable.dashboard_cruise_on);
+                            cruise_on_off=1;
+                            optionsToggle  = optionsToggle | 0x1;
+                        } else if ((optionsNotificationData[0] & 0x1) == 0) {
+                            cruiseButton.setImageResource(R.drawable.dashboard_cruise_off);
+                            cruise_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x1);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    }  else if (((optionsNotificationData[0]^optionsLastState)&0x2) == 0x2) {       //    warning
+                        if ((optionsNotificationData[0] & 0x2) == 0x2) {
+                            blinkingTimerWarningThread = new BlinkingTimerWarningThread();
+                            blinkingTimerWarningThread.start();
+                            warningLight_on_off=1;
+                            optionsToggle  = optionsToggle | 0x2;
+                        } else if ((optionsNotificationData[0] & 0x2) == 0) {
+                            if (blinkingTimerWarningThread!=null) {
+                                blinkingTimerWarningThread.setRunning(false);
+                                blinkingTimerWarningThread.interrupt();
+                            }
+                            warningButton.setImageResource(R.drawable.dashboard_warning_on);
+                            warningLight_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x2);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    } else if (((optionsNotificationData[0]^optionsLastState)&0x4) == 0x4) {       //   Light Auto
+                        if ((optionsNotificationData[0] & 0x4) == 0x4) {
+                            autoLight.setImageResource(R.drawable.dashboard_auto_light_on);
+                            lightAuto_on_off=1;
+                            optionsToggle  = optionsToggle | 0x4;
+                        } else if ((optionsNotificationData[0] & 0x4) == 0) {
+                            autoLight.setImageResource(R.drawable.dashboard_auto_light);
+                            lightAuto_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x4);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    } else if (((optionsNotificationData[0]^optionsLastState)&0x8) == 0x8) {      //   High Beam
+                        if ((optionsNotificationData[0] & 0x8) == 0x8) {
+                            highBeam.setImageResource(R.drawable.dashboard_high_beam_on);
+                            hightBeam_on_off=1;
+                            optionsToggle  = optionsToggle | 0x8;
+                        } else if ((optionsNotificationData[0] & 0x8) == 0) {
+                            highBeam.setImageResource(R.drawable.dashboard_high_beam_off);
+                            hightBeam_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x8);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    } else if (((optionsNotificationData[0]^optionsLastState)&0x10) == 0x10) {       // Parking Light
+                        if ((optionsNotificationData[0] & 0x10) == 0x10) {
+                            parkingLight.setImageResource(R.drawable.dashboard_parking_light_on);
+                            parkingLight_on_off=1;
+                            optionsToggle  = optionsToggle | 0x10;
+                        } else if ((optionsNotificationData[0] & 0x10) == 0) {
+                            parkingLight.setImageResource(R.drawable.dashboard_parking_light_off);
+                            parkingLight_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x10);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    }  else if (((optionsNotificationData[0]^optionsLastState)&0x20) == 0x20) {       // Parking Light
+                        if ((optionsNotificationData[0] & 0x20) == 0x20) {
+                            onButton.setImageResource(R.drawable.dashboard_on_on);
+                            startButton_on_off=1;
+                            optionsToggle  = optionsToggle | 0x20;
+                        } else if ((optionsNotificationData[0] & 0x20) == 0) {
+                            onButton.setImageResource(R.drawable.dashboard_off_on);
+                            startButton_on_off=0;
+                            optionsToggle  = optionsToggle & (~0x20);
+                        }
+                        //optionsLastState = optionsNotificationData[0];
+                        optionsLastState = (byte) optionsToggle;
+                    }
+
+                }
+//--------------------------------------------------------------------------------------------------------------------------------
+                  else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER)) {
 
                     byte[] magnetometerNotificationData = intent.getByteArrayExtra("XYZCompass");
 
@@ -709,11 +967,17 @@ public class HomeFragment extends Fragment {
         bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
         binding.setBluetoothViewModelData(bluetoothViewModel);
 
+
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY);
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER);
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE);
+        intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_OPTION_VALUE);
+        intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_START_VALUE);
+//        intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_LAST_READ_DONE);
+
+
 
         LocalBroadcastManager.getInstance(this.getContext()).registerReceiver(notificationReceiver, intentFilter);
 
@@ -730,19 +994,25 @@ public class HomeFragment extends Fragment {
 //        final TextView textView = binding.textHome;
 //        homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         circularSeekBarStearing = (CircularSeekBar) binding.circularSeekbar ;
-        leftButton = (ImageButton) binding.left;
-        rightButton = (ImageButton) binding.right;
-        thrrottleButton = (ImageButton) binding.throttle;
-        brakeButton = (ImageButton) binding.brake;
 
+        warningButton = (ImageButton) binding.warningOnButton;
         onButton = (ImageButton) binding.onOffButton;
         cruiseButton = (ImageButton) binding.cruiseButtonOff;
+        autoLight = (ImageButton) binding.lightAutoButton;
+        highBeam = (ImageButton) binding.highBeamButton;
+        parkingLight = (ImageButton) binding.parkingLightButton;
+
+
         compassNorthDirection = (ImageView) binding.nordCompass;
+
+        leftBlinker = (ImageView) binding.leftOff;
+        rightBlinker = (ImageView) binding.rightOff;
 
         signalButton = (ImageButton) binding.signalOffButton;
 
         speedcarSeekBar = (SeekBar)binding.speedSeekBar;
         speedcarBackSeekBar = (SeekBar)binding.speedBackSeekBar;
+
 
 //        tempView = (TextView) binding.textViewTempValue;
 //        humidityView = (TextView) binding.textViewHumidityValue;
@@ -754,6 +1024,12 @@ public class HomeFragment extends Fragment {
         speedcarBackSeekBar.setMax(MOTOR_POWER_MAX);
 
         homeViewModel = new ViewModelProvider(this).get(HomeViewModel.class);
+
+        binding.setBluetoothViewModelData(bluetoothViewModel);     // Set initially speed to 0 on dashboard
+        bluetoothViewModel.setSpeedSensor(0);
+
+        mediaPlayerOnBlinking = MediaPlayer.create(this.getContext(), R.raw.onblinking);
+        mediaPlayerOffBlinking = MediaPlayer.create(this.getContext(), R.raw.offblinking);
 
         // Implenmenation of circular seekbar
         circularSeekBarStearing.setOnSeekBarChangeListener( new CircularSeekBar.OnCircularSeekBarChangeListener () {
@@ -770,6 +1046,46 @@ public class HomeFragment extends Fragment {
                     //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE));
                     sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                 }
+                if (stearEngle > 60) {
+                    if (StearingDirection!=1) {
+                        blinkingTimerLeftThread = new BlinkingTimerLeftThread();
+                        blinkingTimerLeftThread.start();
+
+                        if (blinkingTimerRightThread!=null) {
+                            blinkingTimerRightThread.setRunning(false);
+                            blinkingTimerRightThread.interrupt();
+                        }
+                        rightBlinker.setImageResource(R.drawable.dashboard_right_off);
+                        StearingDirection = 1;
+                    }
+                } else if (stearEngle < 40){
+                    if (StearingDirection!=2){
+                        blinkingTimerRightThread = new BlinkingTimerRightThread();
+                        blinkingTimerRightThread.start();
+
+                        if (blinkingTimerLeftThread!=null) {
+                            blinkingTimerLeftThread.setRunning(false);
+                            blinkingTimerLeftThread.interrupt();
+                        }
+                        leftBlinker.setImageResource(R.drawable.dashboard_left_off);
+                        StearingDirection = 2;
+                    }
+                } else if ((stearEngle >=40)&&(stearEngle <=60)){
+                    if (StearingDirection!=0){
+                        if (blinkingTimerLeftThread!=null) {
+                            blinkingTimerLeftThread.setRunning(false);
+                            blinkingTimerLeftThread.interrupt();
+                        }
+                        if (blinkingTimerRightThread!=null) {
+                            blinkingTimerRightThread.setRunning(false);
+                            blinkingTimerRightThread.interrupt();
+                        }
+                        leftBlinker.setImageResource(R.drawable.dashboard_left_off);
+                        rightBlinker.setImageResource(R.drawable.dashboard_right_off);
+                        StearingDirection = 0;
+                    }
+                }
+
             }
 
             @Override
@@ -796,8 +1112,18 @@ public class HomeFragment extends Fragment {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 if (progress<40) {
                     throttleProgress = 0;
+                    binding.setBluetoothViewModelData(bluetoothViewModel);     // Set speed 0 on dashboard
+                    bluetoothViewModel.setSpeedSensor(throttleProgress);
+                    if (LastSpeedState == 1) {
+                        BluetoothLeService.ActiveSpeedReadThread = 0;
+                        LastSpeedState = 0;
+                    }
                 } else {
                     throttleProgress = progress & 0xFF;
+                    if (LastSpeedState == 0) {
+                        BluetoothLeService.ActiveSpeedReadThread = 1;
+                        LastSpeedState = 1;
+                    }
                 }
                 byte[] val = new byte[1];
                 val[0] = (byte) throttleProgress;
@@ -843,8 +1169,23 @@ public class HomeFragment extends Fragment {
         speedcarBackSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                throttleBackProgress = progress&0xFF;
 
+                if (progress<40) {
+
+                    throttleBackProgress = 0;
+                    binding.setBluetoothViewModelData(bluetoothViewModel);     // Set speed 0 on dashboard
+                    bluetoothViewModel.setSpeedSensor(throttleBackProgress);
+                    if (LastSpeedState == 1) {
+                        BluetoothLeService.ActiveSpeedReadThread = 0;
+                        LastSpeedState = 0;
+                    }
+                } else {
+                    throttleBackProgress = progress & 0xFF;
+                    if (LastSpeedState == 0) {
+                        BluetoothLeService.ActiveSpeedReadThread = 1;
+                        LastSpeedState = 1;
+                    }
+                }
                 byte[] val = new byte[1];
                 val[0] = (byte) throttleBackProgress;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -902,12 +1243,52 @@ public class HomeFragment extends Fragment {
 //    }
 //});
 
+        warningButton.setOnClickListener(new View.OnClickListener() {
 
+
+            @Override
+            public void onClick(View v) {
+
+
+                // TODO Auto-generated method stub
+                // Turn Car ON
+                vibe.vibrate(50);
+
+                if (warningLight_on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle|0x02);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    blinkingTimerWarningThread = new BlinkingTimerWarningThread();
+//                    blinkingTimerWarningThread.start();
+
+//                    warningLight_on_off=1;
+
+                } else
+                {
+                    // Turn your car OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x02));
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    if (blinkingTimerWarningThread!=null) {
+//                        blinkingTimerWarningThread.setRunning(false);
+//                        blinkingTimerWarningThread.interrupt();
+//                    }
+//                    warningButton.setImageResource(R.drawable.dashboard_warning_on);
+//                    warningLight_on_off=0;
+                }
+            }
+        });
 
 
         onButton.setOnClickListener(new View.OnClickListener() {
 
-             int  on_off = 0;
+
 
             @Override
             public void onClick(View v) {
@@ -915,20 +1296,27 @@ public class HomeFragment extends Fragment {
                 // Turn Car ON
                 vibe.vibrate(50);
 
-                if (on_off==0){
+                if (startButton_on_off==0){
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
-                        val[0] = (byte )STERAANGLE_MIDDLE;
-                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                        //sendCharacteristic(val, BluetoothLeService.STEERING_ANGLE_CHARACTERISTIC_UUID);
+                        val[0] = (byte) ((byte )optionsToggle|0x20);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                     }
-                    onButton.setImageResource(R.drawable.dashboard_on_on);
-                    on_off=1;
+//                    parkingLight.setImageResource(R.drawable.dashboard_parking_light_on);
+//                    parkingLight_on_off=1;
+
                 } else
                 {
                     // Turn your car OFF
-                    onButton.setImageResource(R.drawable.dashboard_off_on);
-                    on_off=0;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x20));
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    parkingLight.setImageResource(R.drawable.dashboard_parking_light_off);
+//                    parkingLight_on_off=0;
                 }
             }
         });
@@ -936,7 +1324,6 @@ public class HomeFragment extends Fragment {
 
         cruiseButton.setOnClickListener(new View.OnClickListener() {
 
-            int  on_off = 0;
 
             @Override
             public void onClick(View v) {
@@ -944,26 +1331,145 @@ public class HomeFragment extends Fragment {
                 // Turn Car ON
                 vibe.vibrate(50);
 
-                if (on_off==0){
+                if (cruise_on_off==0){
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
                         val[0] = (byte) ((byte )optionsToggle|0x01);
-                        BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                        //sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                     }
-                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_on);
-                    on_off=1;
+//                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_on);
+//                    on_off=1;
+
+
                 } else
                 {
                     // Turn your car OFF
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         byte[] val =  new byte[1];
                         val[0] = (byte) ((byte )optionsToggle&(~0x01));
-                        BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                        //sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                     }
-                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_off);
-                    on_off=0;
+//                    cruiseButton.setImageResource(R.drawable.dashboard_cruise_off);
+//                    on_off=0;
+                }
+            }
+        });
+
+       autoLight.setOnClickListener(new View.OnClickListener() {
+
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                // Turn Car ON
+                vibe.vibrate(50);
+
+                if (lightAuto_on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle|0x04);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    autoLight.setImageResource(R.drawable.dashboard_auto_light_on);
+//                    lightAuto_on_off=1;
+
+                } else
+                {
+                    // Turn your car OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x04));
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    autoLight.setImageResource(R.drawable.dashboard_auto_light);
+//                    lightAuto_on_off=0;
+                }
+            }
+        });
+
+
+        parkingLight.setOnClickListener(new View.OnClickListener() {
+
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                // Turn Car ON
+                vibe.vibrate(50);
+
+                if (parkingLight_on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle|0x10);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    parkingLight.setImageResource(R.drawable.dashboard_parking_light_on);
+//                    parkingLight_on_off=1;
+
+                } else
+                {
+                    // Turn your car OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x10));
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    parkingLight.setImageResource(R.drawable.dashboard_parking_light_off);
+//                    parkingLight_on_off=0;
+                }
+            }
+        });
+
+        highBeam.setOnClickListener(new View.OnClickListener() {
+
+
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+
+                //   Send notification to Service to cancel read thread and and ask if read was done
+//                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_CANCEL_READ_CHARACTERISTICS);
+//                int CancelNotification = 0;
+//                intent.putExtra("cancel", CancelNotification);
+//                LocalBroadcastManager.getInstance(getContext()).sendBroadcast(intent);
+//                BluetoothLeService.lastRead = 1;  //  Need Onread to say when last Read was done
+//
+//                    if (BluetoothLeService.mDeviceBusy) {
+//                        while (readDone != 1) {
+//                        }
+//                    }
+//                readDone = 0;
+
+
+                vibe.vibrate(50);
+
+                if (hightBeam_on_off==0){
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle|0x8);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    highBeam.setImageResource(R.drawable.dashboard_high_beam_on);
+//                    hightBeam_on_off=1;
+
+                } else
+                {
+                    // Turn your car OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val =  new byte[1];
+                        val[0] = (byte) ((byte )optionsToggle&(~0x8));
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_OPTIONS_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
+//                    highBeam.setImageResource(R.drawable.dashboard_high_beam_off);
+//                    hightBeam_on_off=0;
                 }
             }
         });
@@ -985,23 +1491,23 @@ public class HomeFragment extends Fragment {
                             byte[] val = new byte[1];
                             val[0] = (byte) BUZZER_MIDLE;
 
-                            BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                            //sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
+                            //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
                         }
-                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
-                        signal_on_off = 1;
+//                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
+//                        signal_on_off = 1;
                     } else if (signal_on_off == 1) {
                         // Turn your signal OFF
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                             byte[] val = new byte[1];
                             val[0] = (byte) BUZZER_OFF;
 
-                            BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                            //sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID);
+                            //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
                         }
-                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
-                        signal_on_off = 0;
+//                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
+//                        signal_on_off = 0;
                     }
             }
         });

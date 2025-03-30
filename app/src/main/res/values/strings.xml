@@ -26,7 +26,6 @@
     <string name="channel_description">Bluetooth Communication Chanel</string>
 
 
-
     <!-- Messages Default -->
     <string name="unknown_device">Uknown Device</string>
     <!-- Messages Error -->
@@ -37,9 +36,9 @@
     <string name="ble_connected">BLE Device is connected to your phone</string>
 
     <string-array name="BLE_UIID">
-        <item >http://development.com/xxxx</item>
-        <item >http://test.com/xxx</item>
-        <item >http://example.com/xxx</item>
+        <item>http://development.com/xxxx</item>
+        <item>http://test.com/xxx</item>
+        <item>http://example.com/xxx</item>
     </string-array>
 
 

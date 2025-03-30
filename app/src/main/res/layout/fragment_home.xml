@@ -13,450 +13,382 @@
     </data>
 
 
-
-<androidx.constraintlayout.widget.ConstraintLayout
-
-
-    android:id="@+id/rootRL"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@drawable/home_background"
-    android:fitsSystemWindows="true"
-    tools:context=".ui.home.HomeFragment">
+    <androidx.constraintlayout.widget.ConstraintLayout
 
 
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="440dp"
-        android:layout_marginTop="36dp"
-        android:src="@drawable/dashboard_dir_compass"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:id="@+id/nordCompass"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="440dp"
-        android:layout_marginTop="36dp"
-        android:src="@drawable/dashboard_nord_compass"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="25dp"
-        android:layout_height="26dp"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="204dp"
-        android:src="@drawable/dashboard_humidity"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/dashboard_gabarit_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/dashboard_auto_light_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        android:id="@+id/rootRL"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/home_background"
+        android:fitsSystemWindows="true"
+        tools:context=".ui.home.HomeFragment">
 
 
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="440dp"
+            android:layout_marginTop="36dp"
+            android:src="@drawable/dashboard_dir_compass"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <ImageButton
-        android:id="@+id/signalOffButton"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="664dp"
-        android:layout_marginTop="128dp"
-        android:background="@null"
-        android:clickable="true"
-        android:src="@drawable/dashboard_signal_off"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageView
+            android:id="@+id/nordCompass"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="440dp"
+            android:layout_marginTop="36dp"
+            android:src="@drawable/dashboard_nord_compass"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="26dp"
+            android:layout_marginStart="48dp"
+            android:layout_marginTop="204dp"
+            android:src="@drawable/dashboard_humidity"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="92dp"
-        android:src="@drawable/dashboard_akku_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="140dp"
-        android:src="@drawable/dashboard_camera_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageButton
+            android:id="@+id/parkingLightButton"
+            android:background="@null"
+            android:clickable="true"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="40dp"
+            android:src="@drawable/dashboard_parking_light_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
 
 
 
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="608dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/dashboard_left_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageButton
+            android:id="@+id/signalOffButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="664dp"
+            android:layout_marginTop="128dp"
+            android:background="@null"
+            android:clickable="true"
+            android:src="@drawable/dashboard_signal_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
 
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="608dp"
-        android:layout_marginTop="88dp"
-        android:src="@drawable/dashboard_light_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="664dp"
-        android:layout_marginTop="88dp"
-        android:src="@drawable/dashboard_parktronic_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="664dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/dashboard_right_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="608dp"
-        android:layout_marginTop="128dp"
-        android:src="@drawable/dashboard_warning_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="112dp"
-        android:layout_marginTop="92dp"
-        android:src="@drawable/dashboard_akku"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageView
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="112dp"
-        android:layout_marginTop="40dp"
-        android:src="@drawable/dashboard_auto_light"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="140dp"
+            android:src="@drawable/dashboard_camera_on"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
 
+        <ImageView
+            android:id="@+id/leftOff"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="328dp"
+            android:layout_marginTop="92dp"
+            android:src="@drawable/dashboard_left_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar
-        android:id="@+id/circularSeekbar"
-        android:layout_width="175dp"
-        android:layout_height="195dp"
-        android:layout_marginTop="216dp"
-        android:rotationY="180"
-        app:circle_color="#C8D5FF"
-        app:circle_x_radius="130dp"
-        app:circle_y_radius="150dp"
-        app:end_angle="0"
-        app:layout_constraintHorizontal_bias="0.053"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation"
-        app:pointer_color="#0174DF"
-        app:pointer_halo_color="#880174DF"
-        app:progress="50"
-        app:start_angle="180"
-        app:use_custom_radii="true"
-        tools:ignore="MissingConstraints" />
+        <ImageButton
+            android:id="@+id/highBeamButton"
+            android:background="@null"
+            android:clickable="true"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="92dp"
+            android:src="@drawable/dashboard_high_beam_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-
-    <SeekBar
-        android:id="@+id/speedSeekBar"
-        android:layout_width="131dp"
-        android:layout_height="149dp"
-        android:layout_marginTop="192dp"
-        android:progress="0"
-        android:progressBackgroundTint="#C8D5FF"
-        android:rotation="270"
-        android:splitTrack="true"
-        android:thumb="@drawable/arrow_circle_up"
-        android:thumbOffset="20dp"
-        android:thumbTint="#C8D5FF"
-        app:defaultNavHost="true"
-        app:layout_constraintHorizontal_bias="0.973"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <SeekBar
-        android:id="@+id/speedBackSeekBar"
-        android:layout_width="120dp"
-        android:layout_height="130dp"
-        android:layout_marginTop="216dp"
-        android:progress="0"
-        android:progressBackgroundTint="#C8D5FF"
-        android:rotation="90"
-        android:splitTrack="true"
-        android:thumb="@drawable/arrow_circle_up"
-        android:thumbOffset="20dp"
-        android:thumbTint="#C8D5FF"
-        app:defaultNavHost="true"
-        app:layout_constraintHorizontal_bias="0.805"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageButton
-        android:id="@+id/right"
-        android:layout_width="62dp"
-        android:layout_height="74dp"
-        android:layout_marginTop="488dp"
-        android:rotation="270"
-        android:src="@android:drawable/arrow_down_float"
-        app:layout_constraintHorizontal_bias="0.292"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageButton
-        android:id="@+id/left"
-        android:layout_width="66dp"
-        android:layout_height="76dp"
-        android:layout_marginTop="488dp"
-        android:rotation="90"
-        android:src="@android:drawable/arrow_down_float"
-        app:layout_constraintHorizontal_bias="0.045"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageButton
-        android:id="@+id/throttle"
-        android:layout_width="54dp"
-        android:layout_height="104dp"
-        android:layout_marginTop="452dp"
-        android:src="@android:drawable/btn_default_small"
-        app:layout_constraintHorizontal_bias="0.955"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <ImageButton
-        android:id="@+id/brake"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="488dp"
-        android:src="@android:drawable/btn_default"
-        app:layout_constraintHorizontal_bias="0.719"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="40dp"
+            android:src="@drawable/dashboard_parktronic_on"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
 
-    <ImageButton
-        android:id="@+id/onOffButton"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_marginStart="504dp"
-        android:layout_marginTop="128dp"
-        android:background="@null"
-        android:clickable="true"
-        android:src="@drawable/dashboard_off_on"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageView
+            android:id="@+id/rightOff"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="392dp"
+            android:layout_marginTop="92dp"
+            android:src="@drawable/dashboard_right_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <ImageButton
-        android:id="@+id/cruiseButtonOff"
-        android:layout_width="48dp"
-        android:layout_height="34dp"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="140dp"
-        android:background="@null"
-        android:clickable="true"
-        android:src="@drawable/dashboard_cruise_off"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageButton
+            android:id="@+id/warningOnButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="608dp"
+            android:layout_marginTop="88dp"
+            android:background="@null"
+            android:src="@drawable/dashboard_warning_on"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <TextView
-        android:id="@+id/textViewTempUnitMeasurment"
-        android:layout_width="16dp"
-        android:layout_height="17dp"
-        android:layout_marginStart="564dp"
-        android:layout_marginTop="56dp"
-        android:text="\u2103"
-        android:textColor="#03E3FC"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="664dp"
+            android:layout_marginTop="88dp"
+            android:src="@drawable/dashboard_akku"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <TextView
-        android:id="@+id/textViewSpeedUnitMeasurment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="368dp"
-        android:layout_marginTop="56dp"
-        android:text="m/s"
-        android:textColor="#03E3FC"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <ImageButton
+            android:id="@+id/lightAutoButton"
+            android:background="@null"
+            android:clickable="true"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="92dp"
+            android:src="@drawable/dashboard_auto_light"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
 
-    <TextView
-        android:id="@+id/textViewSpeedValue"
-        android:layout_width="129dp"
-        android:layout_height="49dp"
-        android:layout_marginStart="236dp"
-        android:layout_marginTop="28dp"
-        android:text="@{bluetoothViewModelData.speedSensor.toString()}"
-        android:textColor="#FFFFFF"
-        android:textSize="40dp"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <TextView
-        android:id="@+id/textViewTempValue"
-        android:layout_width="61dp"
-        android:layout_height="38dp"
-        android:layout_marginStart="504dp"
-        android:layout_marginTop="40dp"
-        android:text="@{bluetoothViewModelData.tempSensor.toString()}"
-        android:textColor="#FFFFFF"
-        android:textSize="30dp"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
-
-    <TextView
-        android:id="@+id/textViewHumidityValue"
-        android:layout_width="35dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="192dp"
-        android:text="@{bluetoothViewModelData.humiditySensor.toString()}"
-        android:textColor="#FFFFFF"
-        android:textSize="30dp"
-        app:layout_constraintHorizontal_bias="0.953"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navGraph="@navigation/mobile_navigation" />
+        <com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar
+            android:id="@+id/circularSeekbar"
+            android:layout_width="175dp"
+            android:layout_height="195dp"
+            android:layout_marginTop="216dp"
+            android:rotationY="180"
+            app:circle_color="#C8D5FF"
+            app:circle_x_radius="130dp"
+            app:circle_y_radius="150dp"
+            app:end_angle="0"
+            app:layout_constraintHorizontal_bias="0.053"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation"
+            app:pointer_color="#0174DF"
+            app:pointer_halo_color="#880174DF"
+            app:progress="50"
+            app:start_angle="180"
+            app:use_custom_radii="true"
+            tools:ignore="MissingConstraints" />
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <SeekBar
+            android:id="@+id/speedSeekBar"
+            android:layout_width="131dp"
+            android:layout_height="149dp"
+            android:layout_marginTop="192dp"
+            android:progress="0"
+            android:progressBackgroundTint="#C8D5FF"
+            android:rotation="270"
+            android:splitTrack="true"
+            android:thumb="@drawable/arrow_circle_up"
+            android:thumbOffset="20dp"
+            android:thumbTint="#C8D5FF"
+            app:defaultNavHost="true"
+            app:layout_constraintHorizontal_bias="0.973"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <SeekBar
+            android:id="@+id/speedBackSeekBar"
+            android:layout_width="120dp"
+            android:layout_height="130dp"
+            android:layout_marginTop="216dp"
+            android:progress="0"
+            android:progressBackgroundTint="#C8D5FF"
+            android:rotation="90"
+            android:splitTrack="true"
+            android:thumb="@drawable/arrow_circle_up"
+            android:thumbOffset="20dp"
+            android:thumbTint="#C8D5FF"
+            app:defaultNavHost="true"
+            app:layout_constraintHorizontal_bias="0.805"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+
+        <ImageButton
+            android:id="@+id/onOffButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="608dp"
+            android:layout_marginTop="128dp"
+            android:background="@null"
+            android:clickable="true"
+            android:src="@drawable/dashboard_off_on"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <ImageButton
+            android:id="@+id/cruiseButtonOff"
+            android:layout_width="48dp"
+            android:layout_height="34dp"
+            android:layout_marginStart="68dp"
+            android:layout_marginTop="140dp"
+            android:background="@null"
+            android:clickable="true"
+            android:src="@drawable/dashboard_cruise_off"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <TextView
+            android:id="@+id/textViewTempUnitMeasurment"
+            android:layout_width="16dp"
+            android:layout_height="17dp"
+            android:layout_marginStart="564dp"
+            android:layout_marginTop="56dp"
+            android:text="\u2103"
+            android:textColor="#03E3FC"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <TextView
+            android:id="@+id/textViewSpeedUnitMeasurment"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="368dp"
+            android:layout_marginTop="56dp"
+            android:text="m/s"
+            android:textColor="#03E3FC"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <TextView
+            android:id="@+id/textViewSpeedValue"
+            android:layout_width="129dp"
+            android:layout_height="49dp"
+            android:layout_marginStart="236dp"
+            android:layout_marginTop="28dp"
+            android:text="@{bluetoothViewModelData.speedSensor.toString()}"
+            android:textColor="#FFFFFF"
+            android:textSize="40dp"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <TextView
+            android:id="@+id/textViewTempValue"
+            android:layout_width="61dp"
+            android:layout_height="38dp"
+            android:layout_marginStart="504dp"
+            android:layout_marginTop="40dp"
+            android:text="@{bluetoothViewModelData.tempSensor.toString()}"
+            android:textColor="#FFFFFF"
+            android:textSize="30dp"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+        <TextView
+            android:id="@+id/textViewHumidityValue"
+            android:layout_width="35dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="192dp"
+            android:text="@{bluetoothViewModelData.humiditySensor.toString()}"
+            android:textColor="#FFFFFF"
+            android:textSize="30dp"
+            app:layout_constraintHorizontal_bias="0.953"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navGraph="@navigation/mobile_navigation" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     </layout>

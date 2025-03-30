@@ -1,6 +1,7 @@
 package com.example.navigationleftexample.ui.bluetooth;
 
 import android.bluetooth.BluetoothDevice;
+import android.content.ServiceConnection;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.widget.Switch;
@@ -16,7 +17,7 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
    // private SavedStateHandle savedStateHandle;
 
 
-
+    private MutableLiveData<ServiceConnection> lastServiceConnection;
 
     private  MutableLiveData<BluetoothDevice> selectedDevice;
 
@@ -27,6 +28,7 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
 
     private MutableLiveData<Float> speedSensor;
 
+    private MutableLiveData<Boolean> bluetoothActive;
 
     public BluetoothViewModel() {
 
@@ -35,7 +37,28 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
         speedSensor = new MutableLiveData<>();
         selectedDevice = new MutableLiveData<BluetoothDevice>();
         switchButton = new MutableLiveData<Switch>();
+        bluetoothActive = new MutableLiveData<>();
+        lastServiceConnection = new MutableLiveData<ServiceConnection>();
+        bluetoothActive.setValue(false);
     }
+
+    public LiveData<Boolean> getBluetoothActive() {
+        return bluetoothActive;
+    }
+
+    public void setBluetoothActive(Boolean state){
+        bluetoothActive.setValue(state);
+    }
+
+    public LiveData<ServiceConnection> getLastServiceConnection() {
+        return lastServiceConnection;
+    }
+
+    public void setLastServiceConnection(ServiceConnection conn){
+        lastServiceConnection.setValue(conn);
+    }
+
+
 
 
 
@@ -106,6 +129,12 @@ public class BluetoothViewModel extends ViewModel implements Parcelable {
 
     public int setDevice(BluetoothDevice dev) {
         selectedDevice.setValue(dev);
+        return 0;
+    }
+
+
+    public int deleteDevice() {
+        selectedDevice = null;
         return 0;
     }
 

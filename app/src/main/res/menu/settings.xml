@@ -2,9 +2,9 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/settingsMenu"
+        android:id="@+id/dashboardMenu"
         android:orderInCategory="100"
-        android:title="@string/action_settings"
+        android:title="Dashboard"
         app:showAsAction="never" />
     <item
         android:id="@+id/exitMenu"

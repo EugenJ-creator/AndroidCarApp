@@ -13,8 +13,10 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Build;
@@ -58,6 +60,7 @@ import kotlin.text.HexFormat;
 
 public class BluetoothLeService extends Service {
     public BluetoothLeService() {
+
     }
     public static enum CharType {
         READ,
@@ -69,15 +72,16 @@ public class BluetoothLeService extends Service {
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private static final long READ_MAGNETOMETR_CHARACTERISTIC_ITERATION=500;
-    private static final long READ_SPEED_SENSOR_CHARACTERISTIC_ITERATION=200;
-    private static final long READ_TEMP_HUMIDITY_CHARACTERISTIC_ITERATION=2000;
+    private static final long READ_MAGNETOMETR_CHARACTERISTIC_ITERATION=2000;
+    private static final long READ_SPEED_SENSOR_CHARACTERISTIC_ITERATION=300;
+    private static final long READ_TEMP_HUMIDITY_CHARACTERISTIC_ITERATION=5000;
     private final double[][] euler = {{1.225434,-0.028676,0.069206},{-0.028676,1.087208,0.045837},{0.069206,0.045837,1.057089}};
 
-    private ReadCharacteristicTempHumidityThread readCharacteristicTempHumidityThread = null;
-    private ReadCharacteristicMagnetometerThread readCharacteristicMagnetometerThread = null;
-    private ReadCharacteristicSpeedSensorThread readCharacteristicSpeedSensorThread = null;
-    private ExecuteBluetoothCharacteristicsThread executeBluetoothCharacteristicsThread = null;
+    public static int ActiveSpeedReadThread = 0;    //  Speed should be readed
+    public  ReadCharacteristicTempHumidityThread readCharacteristicTempHumidityThread = null;
+    public  ReadCharacteristicMagnetometerThread readCharacteristicMagnetometerThread = null;
+    public  ReadCharacteristicSpeedSensorThread readCharacteristicSpeedSensorThread = null;
+//    public ExecuteBluetoothCharacteristicsThread executeBluetoothCharacteristicsThread = null;
 
     public final static String ACTION_GATT_CONNECTED = "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "com.example.bluetooth.le.ACTION_GATT_DISCONNECTED";
@@ -95,6 +99,7 @@ public class BluetoothLeService extends Service {
     public static UUID CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID;
     public static UUID CAR_SPEED_SENSOR_CHARACTERISTIC_UUID;
     public static UUID CAR_OPTIONS_CHARACTERISTIC_UUID;
+    public static UUID CAR_HIGH_BEAM_POWER_CHARACTERISTIC_UUID;
 
 //    public static UUID CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC_UUID;
 //    public static UUID CAR_MAGNETOMETER_NOTIFICATION_CHARACTERISTIC_UUID;
@@ -106,7 +111,9 @@ public class BluetoothLeService extends Service {
     public byte[] tempHumidityNotificationData;
     public byte[] magnetometerNotificationData;
     public byte[] buzzerWrittenData;
+    public byte[] optionsWrittenData;
     public byte[] speedSensorData;
+    public byte[] highBeamPowerData;
 
 
 
@@ -147,6 +154,7 @@ public class BluetoothLeService extends Service {
     public static List<BluetoothGattCharacteristic> executeCharacteristicList = new ArrayList<>();
     public static List<Characteristic> charactersiticFifo = new ArrayList<>();
 
+//    public static int lastRead = 0;
 
 //        public  BluetoothGattService getmService() {
 //            return mService;
@@ -168,6 +176,13 @@ public class BluetoothLeService extends Service {
     public static final String ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER = "ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER";
     public static final String ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE = "ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE";
     public static final String ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE = "ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE";
+    public static final String ACTION_NOTIFICATION_RECEIVED_OPTION_VALUE = "ACTION_NOTIFICATION_RECEIVED_OPTION_VALUE";
+    public static final String ACTION_NOTIFICATION_RECEIVED_START_VALUE = "ACTION_NOTIFICATION_RECEIVED_START_VALUE";
+    public static final String ACTION_NOTIFICATION_RECEIVED_HIGH_BEAM_POWER_VALUE = "ACTION_NOTIFICATION_RECEIVED_HIGH_BEAM_POWER_VALUE";
+
+//    public static final String ACTION_NOTIFICATION_CANCEL_READ_CHARACTERISTICS = "ACTION_NOTIFICATION_CANCEL_READ_CHARACTERISTICS";
+//    public static final String ACTION_NOTIFICATION_START_READ_CHARACTERISTICS = "ACTION_NOTIFICATION_START_READ_CHARACTERISTICS";
+//    public static final String ACTION_NOTIFICATION_LAST_READ_DONE = "ACTION_NOTIFICATION_LAST_READ_DONE";
 
     List<BluetoothGattCharacteristic> notificationChars = new ArrayList<>();
     public static List<BluetoothGattCharacteristic> notificationDeactivateChars = new ArrayList<>();
@@ -200,6 +215,10 @@ public class BluetoothLeService extends Service {
         public static final String CAR_MAGNETOMETER_CHARACTERISTIC = "0000ffe6-0000-1000-8000-00805f9b34fb";
         public static final String CAR_SPEED_SENSOR_CHARACTERISTIC = "0000ffe7-0000-1000-8000-00805f9b34fb";
         public static final String CAR_OPTIONS_CHARACTERISTIC = "0000ffe8-0000-1000-8000-00805f9b34fb";
+        public static final String CAR_HIGH_BEAM_POWER_CHARACTERISTIC = "0000ffe9-0000-1000-8000-00805f9b34fb";
+
+
+
 
 //        public static final String CAR_TEMP_HUMIDITY_NOTIFICATION_CHARACTERISTIC = "0000ffe5-0000-1000-8000-00805f9b34fb";
 //        public static final String CAR_MAGNETOMETER_NOTIFICATION_CHARACTERISTIC = "0000ffe6-0000-1000-8000-00805f9b34fb";
@@ -207,6 +226,45 @@ public class BluetoothLeService extends Service {
 
     }
 
+
+
+    // Broadcast Receiver
+    // Don't forget to add new notification to filter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//    BroadcastReceiver notificationServiceReceiver = new BroadcastReceiver() {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            if (intent != null && intent.getAction() != null) {
+//                if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_CANCEL_READ_CHARACTERISTICS)) {
+//
+//                    lastRead = 1;  //  Notify On read that this is the last read. then it has to notify home fragment when is done
+//
+//                    //  Kill threads that are readung Characteristics
+//                    if (readCharacteristicMagnetometerThread!=null) {
+//                        readCharacteristicMagnetometerThread.setRunning(false);
+//                        readCharacteristicMagnetometerThread.interrupt();
+//                    }
+//
+//                    if (readCharacteristicTempHumidityThread!=null) {
+//                        readCharacteristicTempHumidityThread.setRunning(false);
+//                        readCharacteristicTempHumidityThread.interrupt();
+//                    }
+//
+//                    if (readCharacteristicSpeedSensorThread!=null) {
+//                        readCharacteristicSpeedSensorThread.setRunning(false);
+//                        readCharacteristicSpeedSensorThread.interrupt();
+//                    }
+//
+//                } else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_START_READ_CHARACTERISTICS)){
+//                    readCharacteristicMagnetometerThread = new ReadCharacteristicMagnetometerThread();
+//                    readCharacteristicMagnetometerThread.start();
+//                    readCharacteristicTempHumidityThread = new ReadCharacteristicTempHumidityThread();
+//                    readCharacteristicTempHumidityThread.start();
+//                    readCharacteristicSpeedSensorThread = new ReadCharacteristicSpeedSensorThread();
+//                    readCharacteristicSpeedSensorThread.start();
+//                }
+//            }
+//        }
+//    };
 
 //    public static void unSubscribeToCharacteristics(BluetoothGatt gatt) {
 //
@@ -299,7 +357,10 @@ public class BluetoothLeService extends Service {
     }
 
     public boolean initialize() {
-
+//        IntentFilter serviceIntentFilter = new IntentFilter();
+//        serviceIntentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_CANCEL_READ_CHARACTERISTICS);
+//        serviceIntentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_START_READ_CHARACTERISTICS);
+//        LocalBroadcastManager.getInstance(this.getBaseContext()).registerReceiver(notificationServiceReceiver, serviceIntentFilter);
         // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
         // BluetoothAdapter through BluetoothManager.
         final BluetoothManager bluetoothManager =
@@ -331,6 +392,8 @@ public class BluetoothLeService extends Service {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+
+                mDeviceBusy = false;
                 // successfully connected to the GATT Server
                 connectionState = STATE_CONNECTED;
                 //broadcastUpdate(ACTION_GATT_CONNECTED);
@@ -395,6 +458,8 @@ public class BluetoothLeService extends Service {
                         CAR_SPEED_SENSOR_CHARACTERISTIC_UUID = uid;
                     } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_OPTIONS_CHARACTERISTIC)) {
                         CAR_OPTIONS_CHARACTERISTIC_UUID = uid;
+                    } else if (uid.toString().equalsIgnoreCase(BLEUUID.CAR_HIGH_BEAM_POWER_CHARACTERISTIC)) {
+                        CAR_HIGH_BEAM_POWER_CHARACTERISTIC_UUID = uid;
                     }
 
 
@@ -409,7 +474,7 @@ public class BluetoothLeService extends Service {
 //                    }
 
                 }
-
+                BluetoothLeService.mDeviceBusy = false;
 
                 readCharacteristicMagnetometerThread = new ReadCharacteristicMagnetometerThread();
                 readCharacteristicMagnetometerThread.start();
@@ -417,8 +482,8 @@ public class BluetoothLeService extends Service {
                 readCharacteristicTempHumidityThread.start();
                 readCharacteristicSpeedSensorThread = new ReadCharacteristicSpeedSensorThread();
                 readCharacteristicSpeedSensorThread.start();
-                executeBluetoothCharacteristicsThread = new ExecuteBluetoothCharacteristicsThread();
-                executeBluetoothCharacteristicsThread.start();
+//                executeBluetoothCharacteristicsThread = new ExecuteBluetoothCharacteristicsThread();
+//                executeBluetoothCharacteristicsThread.start();
 
                 //subscribeToCharacteristics(gatt);
 
@@ -438,51 +503,125 @@ public class BluetoothLeService extends Service {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 Log.w(TAG, "Characteristic write failed" + characteristic);
                 executeCharacteristicList.remove(0);
+                synchronized (mDeviceBusy) {
+                    mDeviceBusy = false;
+                }
+
+
             } else {
                 executeCharacteristicList.remove(0);
-            }
 
 
+                if (CAR_OPTIONS_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    optionsWrittenData = characteristic.getValue();
 
-            if (CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
-                tempHumidityNotificationData = characteristic.getValue();
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_OPTION_VALUE);
+                    if (optionsWrittenData != null) {
+                        intent.putExtra("optionsData", optionsWrittenData);
+                    }
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
-                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY);
-                if (tempHumidityNotificationData != null) {
-                    intent.putExtra("tempHumidityData", tempHumidityNotificationData);
-                }
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                } else if (CAR_BUZZER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    buzzerWrittenData = characteristic.getValue();
 
-            } else if (CAR_MAGNETOMETER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
+                    if (buzzerWrittenData != null) {
+                        intent.putExtra("buzzerData", buzzerWrittenData);
+                    }
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
 
-                magnetometerNotificationData = characteristic.getValue();
+                } else if (CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    tempHumidityNotificationData = characteristic.getValue();
 
-                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER);
-                intent.putExtra("XYZCompass", magnetometerNotificationData);
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-//            } else if (CAR_BUZZER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
-//                buzzerWrittenData = characteristic.getValue();
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY);
+                    if (tempHumidityNotificationData != null) {
+                        intent.putExtra("tempHumidityData", tempHumidityNotificationData);
+                    }
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+                } else if (CAR_MAGNETOMETER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+
+                    magnetometerNotificationData = characteristic.getValue();
+
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER);
+                    intent.putExtra("XYZCompass", magnetometerNotificationData);
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+
+                    //            } else if (CAR_BUZZER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+    //                buzzerWrittenData = characteristic.getValue();
+    //
+    //                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
+    //                if (buzzerWrittenData != null) {
+    //                    intent.putExtra("buzzerData", buzzerWrittenData);
+    //                }
+    //                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+                } else if (CAR_SPEED_SENSOR_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    speedSensorData = characteristic.getValue();
+
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE);
+                    if (speedSensorData != null) {
+                        intent.putExtra("speedSensorData", speedSensorData);
+                    }
+
+//                    long period = speedSensorData[0] & 0xFF;
+//                    period <<= 8;
+//                    period |= speedSensorData[1] & 0xFF;
+//                    period <<= 8;
+//                    period |= speedSensorData[2] & 0xFF;
 //
-//                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
-//                if (buzzerWrittenData != null) {
-//                    intent.putExtra("buzzerData", buzzerWrittenData);
-//                }
-//                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
-            } else if (CAR_SPEED_SENSOR_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
-                speedSensorData = characteristic.getValue();
+//                    if ((period == 0) && (LastSpeedState == 1)){
+//                        //  Kill thread that is readung Characteristics
+//
+//
+//                        if (readCharacteristicSpeedSensorThread!=null) {
+//                            readCharacteristicSpeedSensorThread.setRunning(false);
+//                            readCharacteristicSpeedSensorThread.interrupt();
+//                        }
+//                        LastSpeedState = 0;
+//                    }
 
-                Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_SPEED_SENSOR_VALUE);
-                if (speedSensorData != null) {
-                    intent.putExtra("speedSensorData", speedSensorData);
+
+
+
+
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+
+                } else if (CAR_HIGH_BEAM_POWER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+                    highBeamPowerData = characteristic.getValue();
+
+                    Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_HIGH_BEAM_POWER_VALUE);
+                    if (highBeamPowerData != null) {
+                        intent.putExtra("highBeamPowerData", highBeamPowerData);
+                    }
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
+                    }
+                    LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
                 }
-                LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
             }
-
-
-
             synchronized (mDeviceBusy) {
                 mDeviceBusy = false;
             }
+
         }
 
         @Override
@@ -639,18 +778,61 @@ public class BluetoothLeService extends Service {
                     if (!executeCharacteristicList.isEmpty()) {
                         executeCharacteristicList.remove(0);
                     }
-                } else if (status == BluetoothGatt.GATT_SUCCESS) {
-                    if (characteristic.getUuid().equals(CAR_BUZZER_CHARACTERISTIC_UUID)|| characteristic.getUuid().equals(CAR_OPTIONS_CHARACTERISTIC_UUID )){
-                        if (!charactersiticFifo.isEmpty()) {
-                            charactersiticFifo.remove(0);
-                        }
+                    synchronized (mDeviceBusy) {
+                        mDeviceBusy = false;
                     }
+                } else if (status == BluetoothGatt.GATT_SUCCESS) {
+//                    if (characteristic.getUuid().equals(CAR_BUZZER_CHARACTERISTIC_UUID)|| characteristic.getUuid().equals(CAR_OPTIONS_CHARACTERISTIC_UUID )){
+//                        if (!charactersiticFifo.isEmpty()) {
+//                            charactersiticFifo.remove(0);
+//                        }
+//                    }
+
+
+
+
                     if (!executeCharacteristicList.isEmpty()) {
                         executeCharacteristicList.remove(0);
                     }
-                }
-                synchronized (mDeviceBusy) {
-                    mDeviceBusy = false;
+
+
+                        if (CAR_BUZZER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+
+                        synchronized (mDeviceBusy) {
+                            mDeviceBusy = false;
+                        }
+                        readCharacteristic(CAR_BUZZER_CHARACTERISTIC_UUID);
+
+
+//                        buzzerWrittenData = characteristic.getValue();
+//
+//                        Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
+//                        if (buzzerWrittenData != null) {
+//                            intent.putExtra("buzzerData", buzzerWrittenData);
+//                        }
+//                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+                    } else if (CAR_OPTIONS_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
+
+                        synchronized (mDeviceBusy) {
+                            mDeviceBusy = false;
+                        }
+                        readCharacteristic(CAR_OPTIONS_CHARACTERISTIC_UUID);
+
+
+//                        buzzerWrittenData = characteristic.getValue();
+//
+//                        Intent intent = new Intent(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_BUZZER_VALUE);
+//                        if (buzzerWrittenData != null) {
+//                            intent.putExtra("buzzerData", buzzerWrittenData);
+//                        }
+//                        LocalBroadcastManager.getInstance(getApplicationContext()).sendBroadcast(intent);
+
+                    } else {
+                        synchronized (mDeviceBusy) {
+                            mDeviceBusy = false;
+                        }
+                    }
                 }
 
 //            if (CAR_BUZZER_CHARACTERISTIC_UUID.equals(characteristic.getUuid()) ) {
@@ -904,6 +1086,13 @@ public class BluetoothLeService extends Service {
         bluetoothGatt.disconnect();
     }
 
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        close();
+    }
+
     //  To  put somewhere !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     public void close() {
         if (bluetoothGatt == null) {
@@ -931,6 +1120,14 @@ public class BluetoothLeService extends Service {
             readCharacteristicTempHumidityThread.setRunning(false);
             readCharacteristicTempHumidityThread.interrupt();
         }
+
+        if (readCharacteristicSpeedSensorThread!=null) {
+            readCharacteristicSpeedSensorThread.setRunning(false);
+            readCharacteristicSpeedSensorThread.interrupt();
+        }
+
+
+
 
 
         Log.e("CIERRE", "CONEXION CERRADA");
@@ -1114,8 +1311,9 @@ public class BluetoothLeService extends Service {
             try {
                 while(!Thread.currentThread().isInterrupted() ) {
                     //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID, null, BluetoothLeService.CharType.READ ));
-                    readCharacteristic(CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID);
-                    Thread.sleep(READ_TEMP_HUMIDITY_CHARACTERISTIC_ITERATION);
+
+                        readCharacteristic(CAR_TEMP_HUMIDITY_CHARACTERISTIC_UUID);
+                        Thread.sleep(READ_TEMP_HUMIDITY_CHARACTERISTIC_ITERATION);
 
 
 
@@ -1150,10 +1348,11 @@ public class BluetoothLeService extends Service {
             running = true;
 
             try {
-                while(!Thread.currentThread().isInterrupted() ) {
+                while((!Thread.currentThread().isInterrupted())  ) {
                     //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_MAGNETOMETER_CHARACTERISTIC_UUID, null, BluetoothLeService.CharType.READ ));
-                    readCharacteristic(CAR_MAGNETOMETER_CHARACTERISTIC_UUID);
-                    Thread.sleep(READ_MAGNETOMETR_CHARACTERISTIC_ITERATION);
+
+                        readCharacteristic(CAR_MAGNETOMETER_CHARACTERISTIC_UUID);
+                        Thread.sleep(READ_MAGNETOMETR_CHARACTERISTIC_ITERATION);
 
 
 
@@ -1190,7 +1389,10 @@ public class BluetoothLeService extends Service {
             try {
                 while(!Thread.currentThread().isInterrupted() ) {
                     //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_SPEED_SENSOR_CHARACTERISTIC_UUID, null, BluetoothLeService.CharType.READ ));
-                    readCharacteristic(CAR_SPEED_SENSOR_CHARACTERISTIC_UUID);
+
+                    if (ActiveSpeedReadThread == 1) {
+                        readCharacteristic(CAR_SPEED_SENSOR_CHARACTERISTIC_UUID);
+                    }
                     Thread.sleep(READ_SPEED_SENSOR_CHARACTERISTIC_ITERATION);
 
 
@@ -1208,46 +1410,46 @@ public class BluetoothLeService extends Service {
         }
     }
 
-    public class ExecuteBluetoothCharacteristicsThread extends Thread {
-
-        private boolean running = false;
-
-        public void setRunning(boolean running) {
-            this.running = running;
-        }
-
-        public void toggleThread() {
-            this.running = !this.running;
-        }
-
-        public void run() {
-            running = true;
-
-            while(!Thread.currentThread().isInterrupted() ) {
-
-                // TO DO
-
-                if (!charactersiticFifo.isEmpty()) {
-
-                        if ((!BluetoothLeService.mDeviceBusy) && (BluetoothLeService.executeCharacteristicList.isEmpty()) ) {
-
-                            Characteristic characteristic = charactersiticFifo.get(0);
-
-                            if (characteristic.typeChar.equals(CharType.READ)) {
-                                if (readCharacteristic(characteristic.uuidChar)){
-                                    charactersiticFifo.remove(0);
-                                }
-                            } else if (characteristic.typeChar.equals(CharType.WRITE)) {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    sendCharacteristic(characteristic.valueChar, characteristic.uuidChar, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                                }
-                            }
-                }
-                        }
-
-            }
-                   // Thread.sleep(1);
-                return;
-        }
-    }
+//    public class ExecuteBluetoothCharacteristicsThread extends Thread {
+//
+//        private boolean running = false;
+//
+//        public void setRunning(boolean running) {
+//            this.running = running;
+//        }
+//
+//        public void toggleThread() {
+//            this.running = !this.running;
+//        }
+//
+//        public void run() {
+//            running = true;
+//
+//            while(!Thread.currentThread().isInterrupted() ) {
+//
+//                // TO DO
+//
+//                if (!charactersiticFifo.isEmpty()) {
+//
+//                        if ((!BluetoothLeService.mDeviceBusy) && (BluetoothLeService.executeCharacteristicList.isEmpty()) ) {
+//
+//                            Characteristic characteristic = charactersiticFifo.get(0);
+//
+//                            if (characteristic.typeChar.equals(CharType.READ)) {
+//                                if (readCharacteristic(characteristic.uuidChar)){
+//                                    charactersiticFifo.remove(0);
+//                                }
+//                            } else if (characteristic.typeChar.equals(CharType.WRITE)) {
+//                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+//                                    sendCharacteristic(characteristic.valueChar, characteristic.uuidChar, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+//                                }
+//                            }
+//                }
+//                        }
+//
+//            }
+//                   // Thread.sleep(1);
+//                return;
+//        }
+//    }
 }

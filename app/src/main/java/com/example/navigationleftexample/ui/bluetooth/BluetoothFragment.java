@@ -9,6 +9,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
@@ -66,6 +67,10 @@ public class BluetoothFragment extends Fragment {
     private String deviceAddress;
     private String CHANNEL_ID = "001";
 
+    public boolean bluetoothToggleON = false;
+    private Bundle savedState;
+    private boolean saved;
+    private static final String _FRAGMENT_STATE = "FRAGMENT_STATE";
 
 //    BluetoothDevice [] deviceArray;
 
@@ -100,7 +105,7 @@ public class BluetoothFragment extends Fragment {
 //    private static BluetoothLeService bluetoothService;
     private  BluetoothLeService bluetoothService;
 
-
+    TextView bluetoothTextViewOn;
     Intent gattServiceIntent;
 
     //LeDeviceListAdapter leDeviceListAdapter = new LeDeviceListAdapter(layoutInflater);
@@ -185,8 +190,20 @@ public class BluetoothFragment extends Fragment {
 
     @Override
     public void onDestroy() {
+        //super.onDestroy();
+
+        bluetoothViewModel.setLastServiceConnection(serviceConnection);
+
+        savedState = getSavedState();
+        saved = true;
+
+        //super.onDestroyView();
         super.onDestroy();
         Log.i(TAG, "onDestroy");
+    }
+
+    protected Bundle getSavedState() {
+        return savedState;
     }
 
     @Override
@@ -230,7 +247,48 @@ public class BluetoothFragment extends Fragment {
         Log.i(TAG, "onViewStateRestored");
         TextView pairedDeviseText = binding.textViewBluetoothDeviceChosen;
 
-        bluetoothViewModel.getDevice().observe(getViewLifecycleOwner(), bluetoothDevice -> {
+//        if (!(bluetoothViewModel.getDevice() == null)) {
+//
+//            bluetoothViewModel.getDevice().observe(getViewLifecycleOwner(), bluetoothDevice -> {
+//                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+//                    // TODO: Consider calling
+//                    //    ActivityCompat#requestPermissions
+//                    // here to request the missing permissions, and then overriding
+//                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                    //                                          int[] grantResults)
+//                    // to handle the case where the user grants the permission. See the documentation
+//                    // for ActivityCompat#requestPermissions for more details.
+//                    return;
+//                }
+//                pairedDeviseText.setText(bluetoothDevice.getName());
+//            });
+//        } else {
+//            pairedDeviseText.setText("");
+//        }
+
+
+//        bluetoothViewModel.getBluetoothActive().observe(getViewLifecycleOwner(), bluetoothActive -> {
+//            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+//                // TODO: Consider calling
+//                //    ActivityCompat#requestPermissions
+//                // here to request the missing permissions, and then overriding
+//                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                //                                          int[] grantResults)
+//                // to handle the case where the user grants the permission. See the documentation
+//                // for ActivityCompat#requestPermissions for more details.
+//                return;
+//            }
+//
+//            bluetoothSwitch.setChecked(bluetoothActive);
+//
+//        });
+//        bluetoothSwitch.setOnClickListener(null);
+
+        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+
+        if (bluetoothViewModel.getBluetoothActive().getValue() == true){
+            bluetoothToggleON = true;
+            bluetoothTextViewOn.setText("On");
             if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
@@ -241,8 +299,18 @@ public class BluetoothFragment extends Fragment {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            pairedDeviseText.setText(bluetoothDevice.getName());
-        });
+            pairedDeviseText.setText(bluetoothViewModel.getDevice().getValue().getName());
+            bluetoothSwitch.setChecked(bluetoothViewModel.getBluetoothActive().getValue());
+        } else {
+            bluetoothTextViewOn.setText("Off");
+            pairedDeviseText.setText("");
+        }
+
+//        bluetoothSwitch.setChecked(bluetoothViewModel.getBluetoothActive().getValue());
+
+//        bluetoothSwitch.setOnClickListener(mOn);
+
+
 
 //        Switch switchButton = binding.switchBluetoothOn;
 //        bluetoothViewModel.getSwitch().observe(getViewLifecycleOwner(), aSwitch -> {
@@ -254,11 +322,31 @@ public class BluetoothFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
+        //Save the fragment's instance
+//        getFragmentManager().putFragment(outState, "bluetoothFragment", this);
+        if (getView() == null) {
+            outState.putBundle(_FRAGMENT_STATE, savedState);
+        } else {
+            Bundle bundle = saved ? savedState : getSavedState();
+
+            outState.putBundle(_FRAGMENT_STATE, bundle);
+        }
+
+        saved = false;
+
+        super.onSaveInstanceState(outState);
+
         Log.i(TAG,"onSAveInstanceState");
 
     }
 
-
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null) {
+            //Restore the fragment's state here
+        }
+    }
 
     private boolean checkPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -277,6 +365,8 @@ public class BluetoothFragment extends Fragment {
                     super.onScanResult(callbackType, result);
                     leDeviceListAdapter.addDevice(result.getDevice());
                     leDeviceListAdapter.notifyDataSetChanged();
+
+
                 }
             };
 
@@ -390,6 +480,19 @@ public class BluetoothFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+
+
+
+
+
+
+        if (savedInstanceState != null) {
+            savedState = savedInstanceState.getBundle(_FRAGMENT_STATE);
+        }
+
+
+//         = getFragmentManager().getFragment(savedInstanceState, "bluetoothFragment");
+
 //        bluetoothViewModel =
 //                new ViewModelProvider(this).get(BluetoothViewModel.class);
         bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
@@ -397,7 +500,7 @@ public class BluetoothFragment extends Fragment {
 
 
 
-
+       // bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
 
 
 //        LiveData<Float> da = bluetoothViewModel.getTempSensor();
@@ -408,22 +511,23 @@ public class BluetoothFragment extends Fragment {
         createNotificationChannel();
         //getContext().registerReceiver(gattUpdateReceiver, new IntentFilter(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED), Context.RECEIVER_NOT_EXPORTED);
 
+//-----------------------------------------------------------------------------------------------------------------------------
+//        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+//        // BluetoothAdapter through BluetoothManager.
+//        final BluetoothManager bluetoothManager =
+//                (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+//        mBluetoothAdapter = bluetoothManager.getAdapter();
+//
+//
+//        // Checks if Bluetooth is supported on the device.
+//        if (mBluetoothAdapter == null) {
+//            Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+//            getActivity().finish();
+////            return;
+//        }
+//        bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
-        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
-        // BluetoothAdapter through BluetoothManager.
-        final BluetoothManager bluetoothManager =
-                (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
-        mBluetoothAdapter = bluetoothManager.getAdapter();
-
-
-        // Checks if Bluetooth is supported on the device.
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-            getActivity().finish();
-//            return;
-        }
-        bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
-
+        //--------------------------------------------------------------------------------------------------------------------------------------
         layoutInflater = inflater;
 
 //        WordViewModel = new ViewModelProvider(this, ViewModelProvider.AndroidViewModelFactory.getInstance(getApplication())).get(WordViewModel.class);
@@ -435,11 +539,326 @@ public class BluetoothFragment extends Fragment {
 
         // Check Bluetooth Switch
         bluetoothSwitch = (Switch) binding.switchBluetoothOn;
+
+
+//        bluetoothSwitch.setOnClickListener(new View.OnClickListener() {
+//
+//            public void onClick (CompoundButton buttonView, boolean isChecked) {
+////                Toast.makeText(root.getContext(), "Bluetooth was changed", Toast.LENGTH_SHORT).show();
+//                if (isChecked == true) {
+//// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+////                    // Use this check to determine whether BLE is supported on the device.  Then you can
+////                    // selectively disable BLE-related features.
+////                    if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+////                        Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+////                        getActivity().finish();
+////                    }
+//
+//
+////-------------------------------------------------------------
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+////                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+////                    }
+//
+//// ----------------------------------------------------------------------------------------
+//
+//                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//
+//                    //  Check permissions for Bluetooth Connect
+//                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+//                            return;
+//                        }
+//                    }
+//                    // Request Scan permission
+//                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, REQUEST_CODE_BLUETOOTH_SCAN);
+//
+//
+////                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_DENIED)
+////                    {
+////                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+////                        {
+////                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, 2);
+////                            return;
+////                        }
+////                    }
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+////                        if (!EasyPermissions.hasPermissions(getContext(), BLUETOOTH_PERMISSIONS_S)) {
+////                            EasyPermissions.requestPermissions(this, message, yourRequestCode,BLUETOOTH_PERMISSIONS_S);
+////                        }
+////                    }
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+////                        int permission = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN);
+////                    }
+//                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+////                    boolean fineLocation = checkPermission();
+//
+//                    bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+////                    // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+////                    // BluetoothAdapter through BluetoothManager.
+////                    final BluetoothManager bluetoothManager =
+////                            (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+////                    mBluetoothAdapter = bluetoothManager.getAdapter();
+////
+////
+////                    // Checks if Bluetooth is supported on the device.
+////                    if (mBluetoothAdapter == null) {
+////                        Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+////                        getActivity().finish();
+//////            return;
+////                    }
+//
+//                    //bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+//
+//
+//
+//                    bluetoothTextViewOn.setText("On");
+//
+//                    scanLeDevice();
+//                    bluetoothViewModel.setBluetoothActive(true);
+//                } else {
+//
+////                    TextView connectedDevice = binding.textViewBluetoothDeviceChosen;
+//
+////                    bluetoothViewModel.setDevice(null);
+//
+//
+////                    bluetoothViewModel.getDevice().observe(getViewLifecycleOwner(), bluetoothDevice -> {
+////                        textView.setText(bluetoothDevice.getName());
+////                    });
+//
+//                    bluetoothViewModel.setBluetoothActive(false);
+//
+//                    BluetoothGatt bluetoothGatt = BluetoothLeService.getBluetoothGatt();
+//
+//                    if (bluetoothGatt == null) {
+//                        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+//
+//                        bluetoothTextViewOn.setText("Off");
+//                        stopScanLeDevice();
+//                        //bluetoothViewModel.deleteDevice();
+//                        final TextView textView = binding.textViewBluetoothDeviceChosen;
+//                        // Show bluetooth device name in view
+//                        textView.setText("");
+//
+//
+//                        leDeviceListAdapter.clear();
+//                        leDeviceListAdapter.notifyDataSetChanged();
+//
+//                        return;
+//                    } else {
+//                        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+//                            // TODO: Consider calling
+//                            //    ActivityCompat#requestPermissions
+//                            // here to request the missing permissions, and then overriding
+//                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                            //                                          int[] grantResults)
+//                            // to handle the case where the user grants the permission. See the documentation
+//                            // for ActivityCompat#requestPermissions for more details.
+//                            return;
+//                        }
+//
+//
+//                        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+//
+//                        bluetoothTextViewOn.setText("Off");
+//                        stopScanLeDevice();
+//                        //bluetoothViewModel.deleteDevice();
+//                        final TextView textView = binding.textViewBluetoothDeviceChosen;
+//                        // Show bluetooth device name in view
+//                        textView.setText("");
+//
+//
+//                        leDeviceListAdapter.clear();
+//                        leDeviceListAdapter.notifyDataSetChanged();
+//                        getContext().unbindService(serviceConnection);
+//                    }
+//                }
+//            }
+//        });
+
+//---------------------------------------------------------------------------------------------------
+
+
+
+
+//        bluetoothSwitch.setOnClickListener(new View.OnClickListener(){
+//
+//            @Override
+//            public void onClick(View v) {
+//                boolean enabled = v.isEnabled();
+//                boolean activated = v.isActivated();
+//                boolean clickble = v.isClickable();
+//                boolean pressed = v.isPressed();
+//                boolean selected = v.isSelected();
+//
+//
+//
+//                if (v.isEnabled()== true) {
+//// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+////                    // Use this check to determine whether BLE is supported on the device.  Then you can
+////                    // selectively disable BLE-related features.
+////                    if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+////                        Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+////                        getActivity().finish();
+////                    }
+//
+//
+////-------------------------------------------------------------
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+////                        requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
+////                    }
+//
+//// ----------------------------------------------------------------------------------------
+//
+//                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//
+//                    //  Check permissions for Bluetooth Connect
+//                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+//                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+//                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+//                            return;
+//                        }
+//                    }
+//                    // Request Scan permission
+//                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, REQUEST_CODE_BLUETOOTH_SCAN);
+//
+//
+////                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_DENIED)
+////                    {
+////                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+////                        {
+////                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, 2);
+////                            return;
+////                        }
+////                    }
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+////                        if (!EasyPermissions.hasPermissions(getContext(), BLUETOOTH_PERMISSIONS_S)) {
+////                            EasyPermissions.requestPermissions(this, message, yourRequestCode,BLUETOOTH_PERMISSIONS_S);
+////                        }
+////                    }
+//
+//
+////                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+////                        int permission = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN);
+////                    }
+//                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+////                    boolean fineLocation = checkPermission();
+//
+//                    bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+////                    // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+////                    // BluetoothAdapter through BluetoothManager.
+////                    final BluetoothManager bluetoothManager =
+////                            (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+////                    mBluetoothAdapter = bluetoothManager.getAdapter();
+////
+////
+////                    // Checks if Bluetooth is supported on the device.
+////                    if (mBluetoothAdapter == null) {
+////                        Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+////                        getActivity().finish();
+//////            return;
+////                    }
+//
+//                    //bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
+//
+//
+//                    bluetoothTextViewOn.setText("On");
+//
+//                    scanLeDevice();
+//                    bluetoothViewModel.setBluetoothActive(true);
+//                } else {
+//
+////                    TextView connectedDevice = binding.textViewBluetoothDeviceChosen;
+//
+////                    bluetoothViewModel.setDevice(null);
+//
+//
+////                    bluetoothViewModel.getDevice().observe(getViewLifecycleOwner(), bluetoothDevice -> {
+////                        textView.setText(bluetoothDevice.getName());
+////                    });
+//
+//                    bluetoothViewModel.setBluetoothActive(false);
+//
+//                    BluetoothGatt bluetoothGatt = BluetoothLeService.getBluetoothGatt();
+//
+//                    if (bluetoothGatt == null) {
+//                        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+//
+//                        bluetoothTextViewOn.setText("Off");
+//                        stopScanLeDevice();
+//                        //bluetoothViewModel.deleteDevice();
+//                        final TextView textView = binding.textViewBluetoothDeviceChosen;
+//                        // Show bluetooth device name in view
+//                        textView.setText("");
+//
+//
+//                        leDeviceListAdapter.clear();
+//                        leDeviceListAdapter.notifyDataSetChanged();
+//
+//                        return;
+//                    } else {
+//                        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+//                            // TODO: Consider calling
+//                            //    ActivityCompat#requestPermissions
+//                            // here to request the missing permissions, and then overriding
+//                            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                            //                                          int[] grantResults)
+//                            // to handle the case where the user grants the permission. See the documentation
+//                            // for ActivityCompat#requestPermissions for more details.
+//                            return;
+//                        }
+//
+//
+//                        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+//
+//
+//                        bluetoothTextViewOn.setText("Off");
+//                        stopScanLeDevice();
+//                        //bluetoothViewModel.deleteDevice();
+//                        final TextView textView = binding.textViewBluetoothDeviceChosen;
+//                        // Show bluetooth device name in view
+//                        textView.setText("");
+//
+//
+//                        leDeviceListAdapter.clear();
+//                        leDeviceListAdapter.notifyDataSetChanged();
+//                        getContext().unbindService(serviceConnection);
+//                    }
+//                }
+//            }
+//        });
+
+
+
+
+
         bluetoothSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+
+
+                boolean  keydown = buttonView.isContextClickable();
+
+
 //                Toast.makeText(root.getContext(), "Bluetooth was changed", Toast.LENGTH_SHORT).show();
-                if (isChecked == true) {
+                    if ((isChecked == true)&&(bluetoothToggleON!=true)) {
 // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //                    // Use this check to determine whether BLE is supported on the device.  Then you can
 //                    // selectively disable BLE-related features.
@@ -458,17 +877,17 @@ public class BluetoothFragment extends Fragment {
 
 // ----------------------------------------------------------------------------------------
 
-                    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-                    //  Check permissions for Bluetooth Connect
-                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
-                            return;
+                        //  Check permissions for Bluetooth Connect
+                        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_DENIED) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_CONNECT}, 2);
+                                return;
+                            }
                         }
-                    }
-                    // Request Scan permission
-                    ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, REQUEST_CODE_BLUETOOTH_SCAN);
+                        // Request Scan permission
+                        ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.BLUETOOTH_SCAN}, REQUEST_CODE_BLUETOOTH_SCAN);
 
 
 //                    if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_DENIED)
@@ -491,20 +910,33 @@ public class BluetoothFragment extends Fragment {
 //                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 //                        int permission = ContextCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_SCAN);
 //                    }
-                    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //                    boolean fineLocation = checkPermission();
 
+                        bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+
+                        // Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+                        // BluetoothAdapter through BluetoothManager.
+                        final BluetoothManager bluetoothManager =
+                                (BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE);
+                        mBluetoothAdapter = bluetoothManager.getAdapter();
 
 
+                        // Checks if Bluetooth is supported on the device.
+                        if (mBluetoothAdapter == null) {
+                            Toast.makeText(getContext(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+                            getActivity().finish();
+//            return;
+                        }
+                        bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
 
 
+                        bluetoothTextViewOn.setText("On");
 
-                    TextView bluetoothTextViewOn = binding.textViewBluetoothOn;
-                    bluetoothTextViewOn.setText("On");
+                        scanLeDevice();
+                        bluetoothViewModel.setBluetoothActive(true);
+                    } else if (isChecked == false){
 
-                    scanLeDevice();
-                } else {
-                    TextView bluetoothTextViewOn = binding.textViewBluetoothOn;
 //                    TextView connectedDevice = binding.textViewBluetoothDeviceChosen;
 
 //                    bluetoothViewModel.setDevice(null);
@@ -514,14 +946,63 @@ public class BluetoothFragment extends Fragment {
 //                        textView.setText(bluetoothDevice.getName());
 //                    });
 
+                        bluetoothViewModel.setBluetoothActive(false);
+
+                        BluetoothGatt bluetoothGatt = BluetoothLeService.getBluetoothGatt();
+
+                        if (bluetoothGatt == null) {
+                            bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
 
 
-                    bluetoothTextViewOn.setText("Off");
-                    stopScanLeDevice();
-                    leDeviceListAdapter.clear();
-                    leDeviceListAdapter.notifyDataSetChanged();
+                            bluetoothTextViewOn.setText("Off");
+                            stopScanLeDevice();
+                            //bluetoothViewModel.deleteDevice();
+                            final TextView textView = binding.textViewBluetoothDeviceChosen;
+                            // Show bluetooth device name in view
+                            textView.setText("");
 
-                }
+
+                            leDeviceListAdapter.clear();
+                            leDeviceListAdapter.notifyDataSetChanged();
+
+                            return;
+                        } else {
+                            if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                                // TODO: Consider calling
+                                //    ActivityCompat#requestPermissions
+                                // here to request the missing permissions, and then overriding
+                                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                                //                                          int[] grantResults)
+                                // to handle the case where the user grants the permission. See the documentation
+                                // for ActivityCompat#requestPermissions for more details.
+                                return;
+                            }
+
+
+                            bluetoothTextViewOn = (TextView) binding.textViewBluetoothOn;
+
+
+                            bluetoothTextViewOn.setText("Off");
+                            stopScanLeDevice();
+                            //bluetoothViewModel.deleteDevice();
+                            final TextView textView = binding.textViewBluetoothDeviceChosen;
+                            // Show bluetooth device name in view
+                            textView.setText("");
+
+
+                            leDeviceListAdapter.clear();
+                            leDeviceListAdapter.notifyDataSetChanged();
+                            if (bluetoothService == null) {
+                                getContext().unbindService(bluetoothViewModel.getLastServiceConnection().getValue());
+                                BluetoothLeService.mDeviceBusy = false;
+                            }  else {
+                                getContext().unbindService(serviceConnection);
+                                BluetoothLeService.mDeviceBusy = false;
+                            }
+                        }
+                    }
+                    bluetoothToggleON = false;
+
             }
         });
 

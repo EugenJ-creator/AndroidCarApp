@@ -2,8 +2,10 @@ package com.example.navigationleftexample;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.view.Window;
@@ -11,9 +13,11 @@ import android.view.WindowManager;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.navigationleftexample.ui.settings;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.core.view.WindowCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -162,6 +166,23 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+
+
+
+            if (item.getItemId() == R.id.settingsMenu) {
+                Intent intent = new Intent(MainActivity.this, settings.class);
+                startActivity(intent);
+            } else if (item.getItemId() == R.id.exitMenu) {
+                finish();
+                System.exit(0);
+            }
+
+
+    return super.onOptionsItemSelected(item);
+    }
 
     private void createNotificationChannel() {
         // Create the NotificationChannel, but only on API 26+ because
