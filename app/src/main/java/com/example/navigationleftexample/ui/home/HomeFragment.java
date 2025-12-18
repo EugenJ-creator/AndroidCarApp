@@ -1,9 +1,10 @@
 package com.example.navigationleftexample.ui.home;
 
+//import static kotlin.text.ScreenFloatValueRegEx.value;
+
 import android.Manifest;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -22,38 +23,49 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
-import android.widget.TextView;
-import android.widget.Toast;
+
+//import com.example.navigationleftexample.ui.home.HomeFragment.databinding.ActivityMainBinding;
+import com.example.navigationleftexample.websocket.MessageListener;
+import com.example.navigationleftexample.websocket.MyWebSocketClient;
+import com.example.navigationleftexample.websocket.WebSocketManager;
+import com.google.gson.Gson;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import com.example.navigationleftexample.ui.bluetooth.Characteristic;
 
 import com.example.navigationleftexample.R;
-import com.example.navigationleftexample.ui.ViewModels.BluetoothGameDataViewModel;
 import com.example.navigationleftexample.ui.bluetooth.BluetoothViewModel;
 import com.example.navigationleftexample.ui.circularseekbar.CircularSeekBar;
 import com.example.navigationleftexample.databinding.FragmentHomeBinding;
 import com.example.navigationleftexample.ui.bluetooth.BluetoothLeService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
-public class HomeFragment extends Fragment {
+
+
+
+public class HomeFragment extends Fragment implements MessageListener {
 
 //    Intent gattServiceIntent;
 //    BluetoothGatt bluetoothGatt;
+    private WebView webView;
     private SeekBar speedcarSeekBar;
     private SeekBar speedcarBackSeekBar;
 
@@ -71,6 +83,11 @@ public class HomeFragment extends Fragment {
     private ImageButton autoLight;
     private ImageButton highBeam;
     private ImageButton parkingLight;
+
+    private ImageButton leftCameraServo;
+    private ImageButton rightCameraServo;
+    private ImageButton upCameraServo;
+    private ImageButton bottomCameraServo;
 
     private ImageView compassNorthDirection;
 
@@ -102,6 +119,18 @@ public class HomeFragment extends Fragment {
     private final static int BUZZER_MIDLE = 20;  //200
     private final static int BUZZER_OFF = 0;
 
+    // Camera Servo Max positions
+
+    private final static float MAX_SERVO_CAMERA_LEFT_POSITION = 1;
+    private final static float MAX_SERVO_CAMERA_RIGHT_POSITION = -1;
+    private final static float MAX_SERVO_CAMERA_UPPER_POSITION = -1;
+    private final static float MAX_SERVO_CAMERA_BOTTOM_POSITION = 1;
+    private final static int ITERATION_PERIOD_CAMERA_SERVO = 10;
+
+    private final static float ITERATION_DUTY_CIRCLE_CAMERA_SERVO = 0.01F;
+
+
+    //------------------------------------------------------------
     public static int optionsToggle = 0;
     public static int warningBlinkingActive = 0;
     public static int buzzerVolume = BUZZER_MIDLE;
@@ -127,10 +156,24 @@ public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
     private  BluetoothLeService bluetoothService;
 
+    // Define WebSocketClient object
+    public MyWebSocketClient myWebSocketClient;
+    private float lastX = 0;
+    private float lastY = 0;
+
     MediaPlayer mediaPlayerOnBlinking;
     MediaPlayer mediaPlayerOffBlinking;
     UpdateLeftButtonThread myUpdateLeftButtonThread = null;
     UpdateRightButtonThread myUpdateRightButtonThread = null;
+
+
+    // Threads to stear Camera Servo
+
+    UpdateLeftCameraServoThread myUpdateLeftCameraServoButtonThread = null;
+    UpdateRightCameraServoThread myUpdateRightCameraServoButtonThread = null;
+    UpdateUpCameraServoThread myUpdateUpCameraServoButtonThread = null;
+    UpdateBottomCameraServoThread myUpdateBottomCameraServoButtonThread = null;
+
 //    UpdateThrottleGasThread myUpdateThrottleGasThread = null;
 //    UpdateBrakeThread myUpdateBrakeThread = null;
 
@@ -190,6 +233,17 @@ public class HomeFragment extends Fragment {
             bluetoothService = null;
         }
     };
+
+    // when message is received from WebSocket
+    @Override
+    public void onJsonReceived(Map<String, Object> json) {
+
+    // TODO List
+    System.out.println("Got JSON: " + json);
+
+
+
+    }
 
     public class BlinkingTimerWarningThread extends Thread {
 
@@ -409,6 +463,168 @@ public class HomeFragment extends Fragment {
 
 
             }
+
+        }
+    }
+
+
+        public class UpdateLeftCameraServoThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted()) {
+
+                        while ((lastX < MAX_SERVO_CAMERA_LEFT_POSITION) && running) {
+                            lastX = (float) (lastX + ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
+                            lastX = Math.round(lastX * 100f) / 100f;
+                            sendServoPosition();
+                            Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
+                        }
+
+                        return;
+                    }
+
+
+            }  catch
+              (InterruptedException e) {
+                    Log.e(TAG, e.toString());
+                    //throw new RuntimeException(e);
+
+            }
+
+
+            }
+    }
+
+    public class UpdateRightCameraServoThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted()) {
+
+                    while ((lastX > MAX_SERVO_CAMERA_RIGHT_POSITION) && running) {
+                        lastX = (float) (lastX - ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
+                        lastX = Math.round(lastX * 100f) / 100f;
+                        sendServoPosition();
+                        Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
+                    }
+                    return;
+
+                }
+
+
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+
+
+        }
+    }
+
+
+    public class UpdateUpCameraServoThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted()) {
+
+                    while ((lastY > MAX_SERVO_CAMERA_UPPER_POSITION) && running) {
+                        lastY = (float) (lastY - ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
+                        lastY = Math.round(lastY * 100f) / 100f;
+                        sendServoPosition();
+                        Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
+                    }
+
+                    return;
+                }
+
+
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+
+
+        }
+    }
+
+    public class UpdateBottomCameraServoThread extends Thread {
+
+        private boolean running = false;
+
+        public void setRunning(boolean running) {
+            this.running = running;
+        }
+
+        public void toggleThread() {
+            this.running = !this.running;
+        }
+
+        public void run() {
+            running = true;
+
+            try {
+                while(!Thread.currentThread().isInterrupted()) {
+
+                    while ((lastY < MAX_SERVO_CAMERA_BOTTOM_POSITION) && running) {
+                        lastY = (float) (lastY + ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
+                        lastY = Math.round(lastY * 100f) / 100f;
+                        sendServoPosition();
+                        Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
+                    }
+                    return;
+
+                }
+
+
+            }  catch
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
+
+            }
+
 
         }
     }
@@ -967,6 +1183,25 @@ public class HomeFragment extends Fragment {
         bluetoothViewModel = new ViewModelProvider(requireActivity()).get(BluetoothViewModel.class);
         binding.setBluetoothViewModelData(bluetoothViewModel);
 
+        //  TODO  URI must be loaded from a Data Bank in the future
+        //  Create URI of the Web Socket Server (Raspberry)
+        URI uriRaspWebSocket;
+        try {
+            // Connect to local host
+            uriRaspWebSocket = new URI("ws://192.168.178.24:5000/ws");
+
+
+        myWebSocketClient = WebSocketManager.getInstance(uriRaspWebSocket).getWebSocket();
+        myWebSocketClient.setMessageListener(this);
+
+
+        }
+        catch (URISyntaxException e) {
+            Log.e("WebSocketManager", "Error initializing websocket", e);
+            myWebSocketClient = null;  // explicitly set to null
+            e.printStackTrace();
+            return root;
+        }
 
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_TRMP_HUMIDITY);
@@ -1002,6 +1237,12 @@ public class HomeFragment extends Fragment {
         highBeam = (ImageButton) binding.highBeamButton;
         parkingLight = (ImageButton) binding.parkingLightButton;
 
+        // Initialize ImageButtons for Camera Stearing
+        leftCameraServo = (ImageButton) binding.leftCameraNotPressed;
+        rightCameraServo = (ImageButton) binding.rightCameraNotPressed;
+        upCameraServo = (ImageButton) binding.upCameraNotPressed;
+        bottomCameraServo = (ImageButton) binding.bottomCameraNotPressed;
+
 
         compassNorthDirection = (ImageView) binding.nordCompass;
 
@@ -1012,6 +1253,8 @@ public class HomeFragment extends Fragment {
 
         speedcarSeekBar = (SeekBar)binding.speedSeekBar;
         speedcarBackSeekBar = (SeekBar)binding.speedBackSeekBar;
+
+        webView = (WebView) binding.webView;
 
 
 //        tempView = (TextView) binding.textViewTempValue;
@@ -1030,6 +1273,25 @@ public class HomeFragment extends Fragment {
 
         mediaPlayerOnBlinking = MediaPlayer.create(this.getContext(), R.raw.onblinking);
         mediaPlayerOffBlinking = MediaPlayer.create(this.getContext(), R.raw.offblinking);
+
+
+        // --------------------------------------------------- Set webView and connct to WebRtc Server ----------------------------------------
+
+        // Enable JavaScript if the stream page requires it
+
+        if (myWebSocketClient != null){
+            WebSettings webSettings = webView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+
+            // Keep navigation inside the WebView
+            webView.setWebViewClient(new WebViewClient());
+
+            webView.loadUrl("http://192.168.178.31:8889/cam1");
+            // Put servo to initial position
+            sendServoPosition();
+        }
+
+
 
         // Implenmenation of circular seekbar
         circularSeekBarStearing.setOnSeekBarChangeListener( new CircularSeekBar.OnCircularSeekBarChangeListener () {
@@ -1514,6 +1776,9 @@ public class HomeFragment extends Fragment {
 
 
 
+
+        //--------------------------------------------------------------------------------------------------
+
 //        leftButton.setOnTouchListener(new View.OnTouchListener() {
 //            @Override
 //            public boolean onTouch(View v, MotionEvent event) {
@@ -1713,9 +1978,131 @@ public class HomeFragment extends Fragment {
 //        });
 
 
+
+            leftCameraServo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                    myUpdateLeftCameraServoButtonThread = new UpdateLeftCameraServoThread();
+                    myUpdateLeftCameraServoButtonThread.start();
+
+
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+
+
+                    myUpdateLeftCameraServoButtonThread.setRunning(false);
+                    myUpdateLeftCameraServoButtonThread.interrupt();
+
+
+                }
+                return true;
+            }
+        });
+
+
+
+        rightCameraServo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                    myUpdateRightCameraServoButtonThread = new UpdateRightCameraServoThread();
+                    myUpdateRightCameraServoButtonThread.start();
+
+
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+
+
+                    myUpdateRightCameraServoButtonThread.setRunning(false);
+                    myUpdateRightCameraServoButtonThread.interrupt();
+
+
+                }
+                return true;
+            }
+        });
+
+
+
+        upCameraServo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                    myUpdateUpCameraServoButtonThread = new UpdateUpCameraServoThread();
+                    myUpdateUpCameraServoButtonThread.start();
+
+
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+
+
+                    myUpdateUpCameraServoButtonThread.setRunning(false);
+                    myUpdateUpCameraServoButtonThread.interrupt();
+
+
+                }
+                return true;
+            }
+        });
+
+
+        bottomCameraServo.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_DOWN) {
+
+                    myUpdateBottomCameraServoButtonThread = new UpdateBottomCameraServoThread();
+                    myUpdateBottomCameraServoButtonThread.start();
+
+
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+
+
+                    myUpdateBottomCameraServoButtonThread.setRunning(false);
+                    myUpdateBottomCameraServoButtonThread.interrupt();
+
+
+                }
+                return true;
+            }
+        });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
          return root;
     }
 
+
+    // == SEND CURRENT SERVO POSITIONS ==
+    private void sendServoPosition() {
+        if (myWebSocketClient != null ) {
+            //String json = "{ \"x\": " + lastX + ", \"y\": " + lastY + " }";
+
+            Map<String, Object> json = new HashMap<>();
+            json.put("x", lastX);
+            json.put("y", lastY);
+
+            //ws.send(new Gson().toJson(json));
+
+            myWebSocketClient.send(new Gson().toJson(json));
+            Log.i("WebSocket", "Sent: " + json);
+        }
+    }
 
     public ImageButton getLeftButton() {
         return leftButton;

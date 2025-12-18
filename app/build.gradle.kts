@@ -29,8 +29,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         viewBinding = true
@@ -67,7 +67,9 @@ dependencies {
     implementation ("pub.devrel:easypermissions:3.0.0")
     implementation ("pub.devrel:easypermissions:2.0.1")
     implementation ("me.tankery.lib:circularSeekBar:1.4.2")
-
+    implementation("dev.gustavoavila:java-android-websocket-client:2.0.2")
+    implementation(fileTree("libs") { include("*.jar") })
+    implementation("com.google.code.gson:gson:2.10.1")
 
 
 }
