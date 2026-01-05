@@ -1,8 +1,6 @@
 package com.example.navigationleftexample.ui.bluetooth;
 
 import android.Manifest;
-import android.annotation.TargetApi;
-import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -13,47 +11,22 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
-import android.view.View;
-import android.widget.Toast;
-import com.example.navigationleftexample.ui.bluetooth.Characteristic;
-
-import com.example.navigationleftexample.databinding.FragmentBluetoothBinding;
-import com.example.navigationleftexample.databinding.FragmentHomeBinding;
-import com.example.navigationleftexample.ui.bluetooth.SampleGattAttributes;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ViewModel;
-import androidx.lifecycle.ViewModelProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
-
-import com.example.navigationleftexample.R;
-import com.example.navigationleftexample.ui.home.HomeFragment;
-import com.google.firebase.crashlytics.buildtools.reloc.org.apache.commons.codec.binary.Hex;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.IntStream;
-
-import kotlin.text.HexFormat;
 
 
 

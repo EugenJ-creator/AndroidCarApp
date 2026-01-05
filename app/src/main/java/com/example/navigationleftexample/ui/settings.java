@@ -41,9 +41,15 @@ import android.widget.TextView;
 import android.widget.Toolbar;
 
 import com.example.navigationleftexample.databinding.FragmentHomeBinding;
+import com.example.navigationleftexample.repository.MainRepository;
 import com.example.navigationleftexample.ui.bluetooth.BluetoothLeService;
 import com.example.navigationleftexample.ui.bluetooth.BluetoothViewModel;
 import com.example.navigationleftexample.ui.settings;
+import com.example.navigationleftexample.utils.DataModel;
+import com.example.navigationleftexample.utils.DataModelType;
+import com.example.navigationleftexample.webrtc.WebRTCClient;
+import com.example.navigationleftexample.websocket.MyWebSocketClient;
+import com.example.navigationleftexample.websocket.WebSocketManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
@@ -61,6 +67,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.navigationleftexample.databinding.ActivityMainBinding;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.UUID;
 
 
@@ -69,6 +77,7 @@ public class settings extends AppCompatActivity {
     private SeekBar powerHighBeamSeekBar;
     private View decorView;
     public static int HighBeamPowerProgress;
+
 
     private final static int HIGH_BEAM_POWER_MAX = 250;
     private final static int HIGH_BEAM_POWER_MIN = 0;
@@ -248,6 +257,7 @@ public class settings extends AppCompatActivity {
             startActivityIfNeeded(intent, 0);
 
         } else if (item.getItemId() == R.id.exitMenu) {
+
             finish();
             System.exit(0);
         }

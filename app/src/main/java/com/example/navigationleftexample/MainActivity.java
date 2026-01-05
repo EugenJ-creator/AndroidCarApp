@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
@@ -14,7 +15,12 @@ import android.webkit.WebView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.example.navigationleftexample.repository.MainRepository;
 import com.example.navigationleftexample.ui.settings;
+import com.example.navigationleftexample.utils.DataModel;
+import com.example.navigationleftexample.utils.DataModelType;
+import com.example.navigationleftexample.websocket.MyWebSocketClient;
+import com.example.navigationleftexample.websocket.WebSocketManager;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
@@ -31,6 +37,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 
 import com.example.navigationleftexample.databinding.ActivityMainBinding;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -39,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String CHANNEL_ID = "001";
 
-
+    MyWebSocketClient myWebSocketClient;
     private View decorView;
 
 
@@ -52,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
+        //FirebaseDatabase.getInstance().getReference().child("masoud").setValue("Hello World");
 
 
         decorView = getWindow().getDecorView();
@@ -179,6 +189,19 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(MainActivity.this, settings.class);
                 startActivity(intent);
             } else if (item.getItemId() == R.id.exitMenu) {
+                URI uriRaspWebSocket;
+                try {
+                    // Connect to local host
+                    uriRaspWebSocket = new URI("ws://"+ MainRepository.getRaspberryIp() +":5000/ws");
+                    myWebSocketClient = WebSocketManager.getInstance(uriRaspWebSocket).getWebSocket();
+                    myWebSocketClient.sendMessageToOtherUser(new DataModel(myWebSocketClient.getTarget(), myWebSocketClient.getCurrentUsername(), null, DataModelType.RTC_ENDCALL));
+                }
+                catch (URISyntaxException e) {
+                    Log.e("WebSocketManager", "Error initializing websocket", e);
+                    myWebSocketClient = null;  // explicitly set to null
+                    e.printStackTrace();
+
+                }
                 finish();
                 System.exit(0);
             }

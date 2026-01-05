@@ -1,11 +1,31 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
 }
 
 android {
     namespace = "com.example.navigationleftexample"
     compileSdk = 34
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -70,6 +90,17 @@ dependencies {
     implementation("dev.gustavoavila:java-android-websocket-client:2.0.2")
     implementation(fileTree("libs") { include("*.jar") })
     implementation("com.google.code.gson:gson:2.10.1")
-
-
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.7.0"))
+    // TODO: Add the dependencies for Firebase products you want to use
+    // When using the BoM, don't specify versions in Firebase dependencies
+    //implementation("com.google.firebase:firebase-analytics")
+    // Add the dependencies for any other desired Firebase products
+    // https://firebase.google.com/docs/android/setup#available-libraries
+    implementation ("com.google.firebase:firebase-database-ktx:20.2.2")
+    implementation ("com.mesibo.api:webrtc:1.1.10")
+    implementation ("com.guolindev.permissionx:permissionx:1.6.1")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.10.1")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.10.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.10.1")
 }

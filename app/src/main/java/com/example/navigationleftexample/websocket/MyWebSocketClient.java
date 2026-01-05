@@ -2,8 +2,16 @@ package com.example.navigationleftexample.websocket;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.example.navigationleftexample.utils.DataModel;
+import com.example.navigationleftexample.utils.ErrorCallBack;
 import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Type;
 import java.net.URI;
@@ -24,7 +32,16 @@ public class MyWebSocketClient extends WebSocketClient {
         super(serverUri);
     }
 
+    private String currentUsername = "Android";
+    private String target = "Raspberry";
 
+    public String getTarget() {
+        return target;
+    }
+
+    public String getCurrentUsername() {
+        return currentUsername;
+    }
 
 
     public void setMessageListener(MessageListener listener) {
@@ -46,15 +63,24 @@ public class MyWebSocketClient extends WebSocketClient {
         Log.i(TAG, "Message: " + message);
 
         try {
-            Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
-            Map<String, Object> json = gson.fromJson(message, mapType);
+//            Type mapType = new TypeToken<Map<String, Object>>() {}.getType();
+//            Map<String, Object> json = gson.fromJson(message, mapType);
 
             if (listener != null) {
-                listener.onJsonReceived(json);
+                listener.onJsonReceived(message);
             }
         } catch (Exception e) {
             Log.e(TAG, "JSON parse error: " + e.getMessage());
         }
+    }
+
+
+    public void sendMessageToOtherUser(DataModel dataModel){
+
+            //send the signal to other user
+            send(new Gson().toJson(dataModel));
+            Log.i("WebSocket", "Sent: " + dataModel);
+
     }
 
 
@@ -64,14 +90,17 @@ public class MyWebSocketClient extends WebSocketClient {
 
     @Override
     public void onBinaryReceived(byte[] data) {
+        Log.i(TAG, "Message: ");
     }
 
     @Override
     public void onPingReceived(byte[] data) {
+        Log.i(TAG, "Message: ");
     }
 
     @Override
     public void onPongReceived(byte[] data) {
+        Log.i(TAG, "Message: ");
     }
 
     @Override
@@ -81,10 +110,8 @@ public class MyWebSocketClient extends WebSocketClient {
 
     @Override
     public void onCloseReceived(int i, String s) {
-
+        Log.i(TAG, "Message: ");
     }
 
-    public void onCloseReceived() {
-        Log.i("WebSocket", "Closed ");
-    }
+
 };
