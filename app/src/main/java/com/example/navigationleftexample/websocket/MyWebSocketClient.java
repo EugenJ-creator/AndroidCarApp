@@ -6,10 +6,6 @@ import androidx.annotation.NonNull;
 
 import com.example.navigationleftexample.utils.DataModel;
 import com.example.navigationleftexample.utils.ErrorCallBack;
-import com.google.firebase.crashlytics.buildtools.reloc.com.google.common.reflect.TypeToken;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -26,6 +22,7 @@ public class MyWebSocketClient extends WebSocketClient {
     private final Gson gson = new Gson();
 
     private  MessageListener listener;
+    private ConnectionListener connectionListener;
 
 
     public MyWebSocketClient(URI serverUri) {
@@ -45,17 +42,25 @@ public class MyWebSocketClient extends WebSocketClient {
 
 
     public void setMessageListener(MessageListener listener) {
+
         this.listener = listener;
     }
 
-
+    // --- Create a setter for the new listener ---
+    public void setConnectionListener(ConnectionListener listener) {
+        this.connectionListener = listener;
+    }
 
 
 
     @Override
     public void onOpen() {
         Log.i("WebSocket", "Session is starting");
-
+        // 1. Check if the listener exists
+        if (connectionListener != null) {
+            // 2. Call the interface method to notify the listener
+            connectionListener.onWebSocketOpen();
+        }
     }
 
     @Override
@@ -87,7 +92,6 @@ public class MyWebSocketClient extends WebSocketClient {
 
 
 
-
     @Override
     public void onBinaryReceived(byte[] data) {
         Log.i(TAG, "Message: ");
@@ -105,12 +109,19 @@ public class MyWebSocketClient extends WebSocketClient {
 
     @Override
     public void onException(Exception e) {
+
         Log.e("WebSocket", e.getMessage());
+        if (connectionListener != null) {
+            connectionListener.onWebSocketError(e);
+        }
     }
 
     @Override
     public void onCloseReceived(int i, String s) {
         Log.i(TAG, "Message: ");
+        if (connectionListener != null) {
+            connectionListener.onWebSocketClose();
+        }
     }
 
 

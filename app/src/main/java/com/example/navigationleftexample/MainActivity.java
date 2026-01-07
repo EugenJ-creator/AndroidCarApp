@@ -37,7 +37,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 
 import com.example.navigationleftexample.databinding.ActivityMainBinding;
-import com.google.firebase.database.FirebaseDatabase;
+
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        //FirebaseDatabase.getInstance().getReference().child("masoud").setValue("Hello World");
+
 
 
         decorView = getWindow().getDecorView();

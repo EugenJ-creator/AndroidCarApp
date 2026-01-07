@@ -3,7 +3,7 @@ package com.example.navigationleftexample.repository;
 import android.content.Context;
 import android.util.Log;
 
-import com.example.navigationleftexample.remote.FirebaseClient;
+
 import com.example.navigationleftexample.utils.DataModel;
 import com.example.navigationleftexample.utils.DataModelType;
 import com.example.navigationleftexample.utils.ErrorCallBack;
@@ -172,58 +172,58 @@ public class MainRepository implements WebRTCClient.Listener {
     public void initWebRTCClient(String username, Context context, SuccessCallBack callBack){
 
 
-            this.webRTCClient = new WebRTCClient(context,new MyPeerConnectionObserver(){
-                @Override
-                public void onAddStream(MediaStream mediaStream) {
-                    super.onAddStream(mediaStream);
+        this.webRTCClient = new WebRTCClient(context,new MyPeerConnectionObserver(){
+            @Override
+            public void onAddStream(MediaStream mediaStream) {
+                super.onAddStream(mediaStream);
 
-                    try {
-                        if (!mediaStream.videoTracks.isEmpty()) {
-                            remoteVideoTrack = mediaStream.videoTracks.get(0);
+                try {
+                    if (!mediaStream.videoTracks.isEmpty()) {
+                        remoteVideoTrack = mediaStream.videoTracks.get(0);
 
-                            if (remoteView != null) {
-                                remoteVideoTrack.addSink(remoteView);
-                            }
-
-                            // 🔔 Notify UI layer
-                            if (streamReadyListener != null) {
-                                streamReadyListener.onRemoteStreamReady();
-                            }
+                        if (remoteView != null) {
+                            remoteVideoTrack.addSink(remoteView);
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
 
-                }
-
-
-                @Override
-                public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
-                    Log.d("TAG", "onConnectionChange: "+newState);
-                    super.onConnectionChange(newState);
-                    if (newState == PeerConnection.PeerConnectionState.CONNECTED && listener!=null){
-                        callState = CallState.CONNECTED;
-                        listener.webrtcConnected();
-                    }
-
-                    if (newState == PeerConnection.PeerConnectionState.CLOSED ||
-                            newState == PeerConnection.PeerConnectionState.DISCONNECTED ){
-                        callState = CallState.IDLE;
-                        if (listener!=null){
-                            listener.webrtcClosed();
+                        // 🔔 Notify UI layer
+                        if (streamReadyListener != null) {
+                            streamReadyListener.onRemoteStreamReady();
                         }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                //  When Ice Server  is setted to WebRTC Client the Ice is transmitted to another Peer
-                @Override
-                public void onIceCandidate(IceCandidate iceCandidate) {
-                    super.onIceCandidate(iceCandidate);
-                    // Not necessary
-                    //webRTCClient.sendIceCandidate(iceCandidate,target);
+
+            }
+
+
+            @Override
+            public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
+                Log.d("TAG", "onConnectionChange: "+newState);
+                super.onConnectionChange(newState);
+                if (newState == PeerConnection.PeerConnectionState.CONNECTED && listener!=null){
+                    callState = CallState.CONNECTED;
+                    listener.webrtcConnected();
                 }
-            },currentUsername);
-            webRTCClient.listener = this;
-            callBack.onSuccess();
+
+                if (newState == PeerConnection.PeerConnectionState.CLOSED ||
+                        newState == PeerConnection.PeerConnectionState.DISCONNECTED ){
+                    callState = CallState.IDLE;
+                    if (listener!=null){
+                        listener.webrtcClosed();
+                    }
+                }
+            }
+            //  When Ice Server  is setted to WebRTC Client the Ice is transmitted to another Peer
+            @Override
+            public void onIceCandidate(IceCandidate iceCandidate) {
+                super.onIceCandidate(iceCandidate);
+                // Not necessary
+                //webRTCClient.sendIceCandidate(iceCandidate,target);
+            }
+        },currentUsername);
+        webRTCClient.listener = this;
+        callBack.onSuccess();
 
     }
 
@@ -250,13 +250,16 @@ public class MainRepository implements WebRTCClient.Listener {
 
     public void initRemoteView(SurfaceViewRenderer view){
 //        if (!isRemoteViewInitialized) {
+        if (view!=null) {
             webRTCClient.initRemoteSurfaceView(view);
             this.remoteView = view;
+        }
 //            isRemoteViewInitialized = true;
 //        }
 
 
         if (remoteVideoTrack != null) {
+            if (remoteView == null) return;
             remoteVideoTrack.addSink(remoteView);
         }
     }
@@ -329,7 +332,7 @@ public class MainRepository implements WebRTCClient.Listener {
         try{
             this.target = model.getSender();
             webRTCClient.onRemoteSessionReceived(new SessionDescription(
-                SessionDescription.Type.OFFER, model.getData()
+                    SessionDescription.Type.OFFER, model.getData()
             ));
             //webRTCClient.answer(model.getSender());
         }catch (Exception e){
@@ -358,5 +361,3 @@ public class MainRepository implements WebRTCClient.Listener {
         void webrtcClosed();
     }
 }
-
-

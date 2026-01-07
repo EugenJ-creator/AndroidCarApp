@@ -63,9 +63,9 @@ public class WebRTCClient {
         try{
             initPeerConnectionFactory();
             peerConnectionFactory = createPeerConnectionFactory();
-    //        iceServer.add(PeerConnection.IceServer.builder("turn:a.relay.metered.ca:443?transport=tcp")
-    //                .setUsername("83eebabf8b4cce9d5dbcb649")
-    //                .setPassword("2D7JvfkOQtBdYW3R").createIceServer());
+            //        iceServer.add(PeerConnection.IceServer.builder("turn:a.relay.metered.ca:443?transport=tcp")
+            //                .setUsername("83eebabf8b4cce9d5dbcb649")
+            //                .setPassword("2D7JvfkOQtBdYW3R").createIceServer());
             iceServer.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer());
 
             peerConnection = createPeerConnection(observer);
@@ -125,7 +125,7 @@ public class WebRTCClient {
         }
 
         viewRenderer.setEnableHardwareScaler(true);
-        viewRenderer.setMirror(true);
+        viewRenderer.setMirror(false);
         viewRenderer.init(eglBaseContext, null);
 
         initializedRemoteView = viewRenderer;

@@ -506,6 +506,30 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.72" />
 
+        <ImageView
+            android:id="@+id/imgWifiView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/wifi_dashboard"
+            app:layout_constraintBottom_toTopOf="@+id/circularSeekbar"
+            app:layout_constraintEnd_toStartOf="@+id/textViewSpeedValue"
+            app:layout_constraintHorizontal_bias="0.212"
+            app:layout_constraintStart_toEndOf="@+id/imageView2"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.208" />
+
+        <ImageView
+            android:id="@+id/imgBluetoothView"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/bluetooth_dashboard"
+            app:layout_constraintBottom_toTopOf="@+id/circularSeekbar"
+            app:layout_constraintEnd_toStartOf="@+id/textViewSpeedValue"
+            app:layout_constraintHorizontal_bias="0.435"
+            app:layout_constraintStart_toEndOf="@+id/imageView2"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.208" />
+
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

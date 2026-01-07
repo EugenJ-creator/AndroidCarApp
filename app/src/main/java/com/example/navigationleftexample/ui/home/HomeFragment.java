@@ -31,10 +31,10 @@ import android.widget.SeekBar;
 //import com.example.navigationleftexample.ui.home.HomeFragment.databinding.ActivityMainBinding;
 import com.example.navigationleftexample.MainActivity;
 import com.example.navigationleftexample.repository.MainRepository;
-import com.example.navigationleftexample.ui.LoginActivity;
 import com.example.navigationleftexample.utils.DataModel;
 import com.example.navigationleftexample.utils.DataModelType;
 import com.example.navigationleftexample.websocket.MessageListener;
+import com.example.navigationleftexample.websocket.ConnectionListener;
 import com.example.navigationleftexample.websocket.MyWebSocketClient;
 import com.example.navigationleftexample.websocket.WebSocketManager;
 import com.google.gson.Gson;
@@ -69,9 +69,9 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 
-public class HomeFragment extends Fragment implements MessageListener, MainRepository.Listener {
+public class HomeFragment extends Fragment implements MessageListener, ConnectionListener, MainRepository.Listener {
 
-//    Intent gattServiceIntent;
+    //    Intent gattServiceIntent;
 //    BluetoothGatt bluetoothGatt;
     private WebView webView;
     private MainRepository mainRepository;
@@ -105,13 +105,16 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
     private ImageView compassNorthDirection;
 
+    private ImageView imgWifi;
+    private ImageView imgBluetooth;
     private ImageView leftBlinker;
     private ImageView rightBlinker;
     private static final String TAG = "HomeFragment ";
 
+    private boolean isRemoteViewInitialized = false;
     private Handler handler = new Handler();
     public HomeViewModel homeViewModel;
-//    private TextView tempView;
+    //    private TextView tempView;
 //    private TextView humidityView;
     private final Gson gson = new Gson();
     private final double[] bias = {-544.48,239.4,55.94};
@@ -309,6 +312,37 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
     }
 
+    //    @Override
+    public void onWebSocketOpen() {
+        requireActivity().runOnUiThread(() -> {
+            // This code block will now safely execute on the main thread.
+            Log.d("HomeFragment", "WebSocket is open! Updating UI.");
+            imgWifi.setVisibility(View.VISIBLE);
+            Toast.makeText(getContext(), "Connected to Server!", Toast.LENGTH_SHORT).show();
+            // Start video stream
+            initVideoStream();
+        });
+    }
+
+    @Override
+    public void onWebSocketClose() {
+        requireActivity().runOnUiThread(() -> {
+            // Handle UI changes when the connection closes
+            Toast.makeText(getContext(), "Connection Lost.", Toast.LENGTH_SHORT).show();
+            imgWifi.setVisibility(View.GONE);
+        });
+
+    }
+
+    @Override
+    public void onWebSocketError(Exception e) {
+        requireActivity().runOnUiThread(() -> {
+            // Handle UI changes on error
+            Toast.makeText(getContext(), "Connection Error.", Toast.LENGTH_SHORT).show();
+            imgWifi.setVisibility(View.GONE);
+        });
+    }
+
     public class BlinkingTimerWarningThread extends Thread {
 
         private boolean running = false;
@@ -388,7 +422,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
                         }
                         status = false;
                     }
-                Thread.sleep(ITERATION_PERIOD_LEFT_RIGHT_BLINKING);
+                    Thread.sleep(ITERATION_PERIOD_LEFT_RIGHT_BLINKING);
                 }
                 return;
             }  catch
@@ -532,7 +566,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
     }
 
 
-        public class UpdateLeftCameraServoThread extends Thread {
+    public class UpdateLeftCameraServoThread extends Thread {
 
         private boolean running = false;
 
@@ -550,26 +584,26 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
             try {
                 while(!Thread.currentThread().isInterrupted()) {
 
-                        while ((lastX < MAX_SERVO_CAMERA_LEFT_POSITION) && running) {
-                            lastX = (float) (lastX + ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
-                            lastX = Math.round(lastX * 100f) / 100f;
-                            sendServoPosition();
-                            Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
-                        }
-
-                        return;
+                    while ((lastX < MAX_SERVO_CAMERA_LEFT_POSITION) && running) {
+                        lastX = (float) (lastX + ITERATION_DUTY_CIRCLE_CAMERA_SERVO);
+                        lastX = Math.round(lastX * 100f) / 100f;
+                        sendServoPosition();
+                        Thread.sleep(ITERATION_PERIOD_CAMERA_SERVO);
                     }
+
+                    return;
+                }
 
 
             }  catch
-              (InterruptedException e) {
-                    Log.e(TAG, e.toString());
-                    //throw new RuntimeException(e);
+            (InterruptedException e) {
+                Log.e(TAG, e.toString());
+                //throw new RuntimeException(e);
 
             }
 
 
-            }
+        }
     }
 
     public class UpdateRightCameraServoThread extends Thread {
@@ -1151,7 +1185,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
                 }
 //--------------------------------------------------------------------------------------------------------------------------------
-                  else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER)) {
+                else if (intent.getAction().equals(BluetoothLeService.ACTION_NOTIFICATION_RECEIVED_MAGNETOMETER)) {
 
                     byte[] magnetometerNotificationData = intent.getByteArrayExtra("XYZCompass");
 
@@ -1244,9 +1278,9 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
         if (!mainRepository.isCallActive()) {
             mainRepository.initWebRTCClient(
-                mainRepository.getCurrentUsername(),
+                    mainRepository.getCurrentUsername(),
                     getContext(),
-                        () -> Log.i("HomeFragment", "WebRTC initialized")
+                    () -> Log.i("HomeFragment", "WebRTC initialized")
             );
             mainRepository.sendCallRequest("Raspberry");
 
@@ -1256,7 +1290,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
                     // ✅ Safe now
                     mainRepository.initRemoteView(binding.remoteView);
                     mainRepository.listener = this;
-
+                    isRemoteViewInitialized = true;
 
 
                     Log.i("HomeFragment", "Remote stream ready, UI enabled");
@@ -1264,73 +1298,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
             });
 
         }
-
-
-        // Reinitiate remoteView
-//        mainRepository.initRemoteView(binding.remoteView);
-        //mainRepository.listener = this;
-//        Log.i("HomeFragment", "Remote stream ready, UI is reenabled");
-
-
-
-
-
-
-        // No need in this project
-//        mainRepository.initLocalView(binding.locvalView);
-
-
-//        IS USED IF SOMEBODY CALLS YOU. WE HAVE ONBE DIRECTION STREAM
-//        mainRepository.subscribeForLatestEvent(data->{
-//            if (data.getType()== DataModelType.StartCall){
-//                this.getActivity().runOnUiThread(()->{
-//                   //binding.incomingNameTV.setText(data.getSender()+" is Calling you");
-//                   binding.incomingCallLayout.setVisibility(View.VISIBLE);
-//                   binding.acceptButton.setOnClickListener(v->{
-//                       // Start the call here
-//                       mainRepository.startCall(data.getSender());
-//                       binding.incomingCallLayout.setVisibility(View.GONE);
-//                   });
-//                   binding.rejectButton.setOnClickListener(v->{
-//                       binding.incomingCallLayout.setVisibility(View.GONE);
-//                   });
-//                });
-//
-//            }
-//        });
-//
-//        binding.switchCameraButton.setOnClickListener(v->{
-//            mainRepository.switchCamera();
-//        });
-//
-//        binding.micButton.setOnClickListener(v->{
-//            if (isMicrophoneMuted){
-//                binding.micButton.setImageResource(R.drawable.ic_baseline_mic_off_24);
-//            }else {
-//                binding.micButton.setImageResource(R.drawable.ic_baseline_mic_24);
-//            }
-//            mainRepository.toggleAudio(isMicrophoneMuted);
-//            isMicrophoneMuted=!isMicrophoneMuted;
-//        });
-//
-
-//
-//        binding.endCallButton.setOnClickListener(v->{
-//            mainRepository.endCall();
-//            finish();
-//        });
-
-
-
-
-
-
-
     }
-
-
-
-
 
 
 
@@ -1356,9 +1324,10 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
             uriRaspWebSocket = new URI("ws://"+MainRepository.getRaspberryIp()+":5000/ws");
 
 
-        myWebSocketClient = WebSocketManager.getInstance(uriRaspWebSocket).getWebSocket();
-        myWebSocketClient.setMessageListener(this);
-        initVideoStream();
+            myWebSocketClient = WebSocketManager.getInstance(uriRaspWebSocket).getWebSocket();
+            myWebSocketClient.setMessageListener(this);
+            myWebSocketClient.setConnectionListener(this);
+//            initVideoStream();
 
         }
         catch (URISyntaxException e) {
@@ -1420,6 +1389,11 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
         speedcarSeekBar = (SeekBar)binding.speedSeekBar;
         speedcarBackSeekBar = (SeekBar)binding.speedBackSeekBar;
 
+        imgBluetooth = (ImageView) binding.imgBluetoothView;
+        imgBluetooth.setVisibility(View.GONE);
+        imgWifi = (ImageView) binding.imgWifiView;
+        imgWifi.setVisibility(View.GONE);
+
 
 //        webView = (WebView) binding.webView;
 
@@ -1444,74 +1418,61 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
         // --------------------------------------------------- Set webView and connect to WebRtc Server ----------------------------------------
 
-        // Enable JavaScript if the stream page requires it
-
-//        if (myWebSocketClient != null){
-//            WebSettings webSettings = webView.getSettings();
-//            webSettings.setJavaScriptEnabled(true);
-//
-//            // Keep navigation inside the WebView
-//            webView.setWebViewClient(new WebViewClient());
-//
-//            webView.loadUrl("http://192.168.178.31:8889/cam1");
-//            // Put servo to initial position
-//            sendServoPosition();
-//        }
 
         binding.videoButton.setOnClickListener(v->{
             if (isCameraMuted){
                 binding.videoButton.setImageResource(R.drawable.ic_baseline_videocam_24);
                 //initVideoStream();
-                //binding.remoteView.setVisibility(View.VISIBLE);
+                binding.remoteView.setVisibility(View.VISIBLE);
 
                 // Show a loading spinner to the user
-                loadingSpinner.setVisibility(View.VISIBLE);
-                new Thread(() -> {
-                    try {
-                        mainRepository = MainRepository.getInstance();
-                        if (!mainRepository.isCallActive()) {
-                            mainRepository.initWebRTCClient(
-                                    mainRepository.getCurrentUsername(),
-                                    getContext(),
-                                    () -> Log.i("HomeFragment", "WebRTC initialized")
-                            );
-
-                            // If initialization is successful, update UI on the main thread
-                            requireActivity().runOnUiThread(() -> {
-                                loadingSpinner.setVisibility(View.GONE);
-                                Log.d("HomeFragment", "WebRTC Client initialized successfully.");
-                                // Now you can safely send your 'start_call' message
-                                mainRepository.sendCallRequest("Raspberry");
-                            });
-
-//                            Log.d("HomeFragment", "WebRTC Client initialized successfully.");
-//                            // Now you can safely send your 'start_call' message
-                        //mainRepository.sendCallRequest("Raspberry");
-
-                            mainRepository.setStreamReadyListener(() -> {
-                                requireActivity().runOnUiThread(() -> {
-
-                                    // ✅ Safe now
-                                    mainRepository.initRemoteView(binding.remoteView);
-                                    mainRepository.listener = this;
-                                    loadingSpinner.setVisibility(View.GONE);
-
-
-                                    Log.i("HomeFragment", "Remote stream ready, UI enabled");
-                                });
-                            });
-
-                    }
-
-                    } catch (Exception e) {
-                        // If initWebRTCClient fails, we end up here
-                        Log.e("HomeFragment", "Failed to initialize WebRTC Client", e);
-                        requireActivity().runOnUiThread(() -> {
-                            loadingSpinner.setVisibility(View.GONE);
-                            Toast.makeText(getContext(), "Failed to start call. Please try again.", Toast.LENGTH_LONG).show();
-                        });
-                    }
-                }).start();
+//                loadingSpinner.setVisibility(View.VISIBLE);
+//                new Thread(() -> {
+//                    try {
+//                        mainRepository = MainRepository.getInstance();
+//                        if (!mainRepository.isCallActive()) {
+//                            mainRepository.initWebRTCClient(
+//                                    mainRepository.getCurrentUsername(),
+//                                    getContext(),
+//                                    () -> Log.i("HomeFragment", "WebRTC initialized")
+//                            );
+//
+//                            // If initialization is successful, update UI on the main thread
+//                            requireActivity().runOnUiThread(() -> {
+//                                loadingSpinner.setVisibility(View.GONE);
+//                                Log.d("HomeFragment", "WebRTC Client initialized successfully.");
+//                                // Now you can safely send your 'start_call' message
+//                                mainRepository.sendCallRequest("Raspberry");
+//                            });
+//
+////                            Log.d("HomeFragment", "WebRTC Client initialized successfully.");
+////                            // Now you can safely send your 'start_call' message
+//                            //mainRepository.sendCallRequest("Raspberry");
+//
+//                            mainRepository.setStreamReadyListener(() -> {
+//                                requireActivity().runOnUiThread(() -> {
+//
+//                                    // ✅ Safe now
+//                                    mainRepository.initRemoteView(binding.remoteView);
+//                                    mainRepository.listener = this;
+//                                    loadingSpinner.setVisibility(View.GONE);
+//
+//
+//                                    Log.i("HomeFragment", "Remote stream ready, UI enabled");
+//                                });
+//                            });
+//
+//                        }
+//
+//                    } catch (Exception e) {
+//                        // If initWebRTCClient fails, we end up here
+//                        Log.e("HomeFragment", "Failed to initialize WebRTC Client", e);
+//                        requireActivity().runOnUiThread(() -> {
+//                            loadingSpinner.setVisibility(View.GONE);
+//                            Toast.makeText(getContext(), "Failed to start call. Please try again.", Toast.LENGTH_LONG).show();
+//                        });
+//                    }
+//                }).start();
 
 
 
@@ -1519,8 +1480,8 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
             }else {
                 binding.videoButton.setImageResource(R.drawable.ic_baseline_videocam_off_24);
-                mainRepository.endCall();
-//                binding.remoteView.setVisibility(View.GONE);
+//                mainRepository.endCall();
+                binding.remoteView.setVisibility(View.GONE);
 
                 // Get a reference to the repository to clean up UI elements first
                 //MainRepository repository = MainRepository.getInstance();
@@ -1877,7 +1838,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
             }
         });
 
-       autoLight.setOnClickListener(new View.OnClickListener() {
+        autoLight.setOnClickListener(new View.OnClickListener() {
 
 
             @Override
@@ -2002,33 +1963,33 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
             public void onClick(View v) {
 
 
-                    // TODO Auto-generated method stub
-                    // Turn Signal ON
-                    vibe.vibrate(50);
+                // TODO Auto-generated method stub
+                // Turn Signal ON
+                vibe.vibrate(50);
 
-                    if (signal_on_off == 0) {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            byte[] val = new byte[1];
-                            val[0] = (byte) BUZZER_MIDLE;
+                if (signal_on_off == 0) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val = new byte[1];
+                        val[0] = (byte) BUZZER_MIDLE;
 
-                            //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
 
-                        }
+                    }
 //                        signalButton.setImageResource(R.drawable.dashboard_signal_on);
 //                        signal_on_off = 1;
-                    } else if (signal_on_off == 1) {
-                        // Turn your signal OFF
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                            byte[] val = new byte[1];
-                            val[0] = (byte) BUZZER_OFF;
+                } else if (signal_on_off == 1) {
+                    // Turn your signal OFF
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        byte[] val = new byte[1];
+                        val[0] = (byte) BUZZER_OFF;
 
-                            //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
-                            sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
-                        }
+                        //BluetoothLeService.charactersiticFifo.add(new Characteristic(BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, val, BluetoothLeService.CharType.WRITE ));
+                        sendCharacteristic(val, BluetoothLeService.CAR_BUZZER_CHARACTERISTIC_UUID, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT);
+                    }
 //                        signalButton.setImageResource(R.drawable.dashboard_signal_off);
 //                        signal_on_off = 0;
-                    }
+                }
             }
         });
 
@@ -2237,7 +2198,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
 
 
-            leftCameraServo.setOnTouchListener(new View.OnTouchListener() {
+        leftCameraServo.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -2342,7 +2303,7 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 
 
 
-         return root;
+        return root;
     }
 
 
@@ -2387,8 +2348,8 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
 //        }
 //        bluetoothGatt.setCharacteristicNotification(characteristic, false);
 //        BluetoothGattDescriptor descriptor = characteristic.getDescriptor(UUID.fromString(BluetoothLeService.BLEUUID.CAR_NOTIFICATION_CCCD_DESCRIPTOR));
-////            // get Characteristics
-////            gattDescriptors = ch.getDescriptors();
+    ////            // get Characteristics
+    ////            gattDescriptors = ch.getDescriptors();
 //
 //        if(descriptor != null) {
 //            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
@@ -2488,7 +2449,10 @@ public class HomeFragment extends Fragment implements MessageListener, MainRepos
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mainRepository.initRemoteView(binding.remoteView);
+        if (isRemoteViewInitialized) {
+            mainRepository.initRemoteView(binding.remoteView);
+        }
+        isRemoteViewInitialized = false;
     }
 
     @Override
